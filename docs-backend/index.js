@@ -1,29 +1,25 @@
 import express from "express";
-import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
-import authRouter from "./src/auth.js";
+import authRouter from "./src/routes/auth.route.js";
+import connectDB from "./src/utils/db.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
+// middleware
 app.use(cors());
 app.use(express.json());
 
-// Database Connection
-const DB_URI = process.env.DB_URI;
+// connect database
+connectDB();
 
-mongoose
-  .connect(DB_URI)
-  .then(() => {
-    console.log("MongoDB Connection Successful!");
-  })
-  .catch((err) => {
-    console.log("MongoDB Connection Error:", err);
-  });
+// routes
+app.get("/", (req, res) => {
+  res.send("API is running...");
+});
 
 app.use("/api/auth", authRouter);
 
