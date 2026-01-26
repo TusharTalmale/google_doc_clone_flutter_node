@@ -1,12 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_doc/widgets/google_sign_in_stub.dart';
-// Conditional import: uses the web package on web (if dart.library.html is available), and the stub on mobile
+import 'package:google_doc/widgets/google_sign_in_stub.dart' as web show renderButton;
 import 'package:google_sign_in_web/google_sign_in_web.dart'
     if (dart.library.io) 'google_sign_in_stub.dart'
     as web;
 
-import 'google_sign_in_stub.dart';
 
 /// ---------- AUTH CARD ----------
 class AuthCard extends StatelessWidget {

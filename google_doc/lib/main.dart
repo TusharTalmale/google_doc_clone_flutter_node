@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart';
-import 'screens/register_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_doc/screens/login_screen.dart';
+import 'package:google_doc/screens/register_screen.dart';
+import 'package:google_doc/screens/router.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -17,11 +20,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home:  RegisterScreen(),
-
+      home: const AuthWrapper(),
       routes: {
-        '/login': (context) =>  LoginScreen(),
-        '/register': (context) =>  RegisterScreen(),
+        '/login': (context) => LoginScreen(),
+        '/register': (context) => RegisterScreen(),
       },
     );
   }

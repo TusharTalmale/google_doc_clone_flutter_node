@@ -7,10 +7,13 @@ class UserModel {
   UserModel({required this.id, required this.email, this.name, this.token});
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    final user = json['user'] != null
+        ? json['user'] as Map<String, dynamic>
+        : json;
     return UserModel(
-      id: json['id'] ?? '',
-      email: json['email'] ?? '',
-      name: json['name'],
+      id: user['id'] ?? user['_id'] ?? '',
+      email: user['email'] ?? '',
+      name: user['name'],
       token: json['token'],
     );
   }
@@ -21,5 +24,13 @@ class UserModel {
     'name': name,
     'token': token,
   };
-  
+
+  UserModel copyWith({String? id, String? email, String? name, String? token}) {
+    return UserModel(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      name: name ?? this.name,
+      token: token ?? this.token,
+    );
+  }
 }
