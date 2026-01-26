@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:google_doc/services/storage_service.dart';
 import 'auth_repository.dart';
 import '../../models/user_model.dart';
 
@@ -9,14 +10,17 @@ final authControllerProvider =
 
 class AuthController extends AsyncNotifier<UserModel?> {
   late final AuthRepository _repo;
+  late final StorageService _storage;
   // Use the singleton instance
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
   @override
   Future<UserModel?> build() async {
     _repo = ref.read(authRepositoryProvider);
+    _storage = ref.read(storageServiceProvider);
 
     // 1. Initialize GoogleSignIn
+    // serverClientId is the WEB OAuth Client ID (used by Google to identify the app)
     await _googleSignIn.initialize(
       serverClientId: 'YOUR_WEB_CLIENT_ID.apps.googleusercontent.com',
     );
@@ -32,29 +36,47 @@ class AuthController extends AsyncNotifier<UserModel?> {
     // This checks if the user is already signed in from a previous session
     await _googleSignIn.attemptLightweightAuthentication();
 
+    return _loadUserFromStorage();
+  }
+
+  Future<UserModel?> _loadUserFromStorage() async {
+    final token = await _storage.getToken();
+    if (token != null) {
+      try {
+        // Validate token by fetching profile
+        final user = await _repo.getUserProfile();
+        return user.copyWith(token: token);
+      } catch (e) {
+        // Token might be invalid/expired
+        await _storage.deleteToken();
+        return null;
+      }
+    }
     return null;
   }
 
   // 🔐 LOGIN
   Future<void> login(String email, String password) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() {
-      return _repo.login(email, password);
+    state = await AsyncValue.guard(() async {
+      final user = await _repo.login(email, password);
+      if (user.token != null) await _storage.saveToken(user.token!);
+      return user;
     });
   }
 
   // 📝 REGISTER
   Future<void> register(String name, String email, String password) async {
     state = const AsyncLoading();
-    state = await AsyncValue.guard(() {
-      return _repo.register(name, email, password);
+    state = await AsyncValue.guard(() async {
+      final user = await _repo.register(name, email, password);
+      if (user.token != null) await _storage.saveToken(user.token!);
+      return user;
     });
   }
 
   // 🔵 GOOGLE SIGN IN
   Future<void> signInWithGoogle() async {
-    // On Web, the renderButton handles the flow automatically.
-    // On Mobile, we must trigger the interactive flow.
     if (await _googleSignIn.supportsAuthenticate()) {
       try {
         await _googleSignIn.authenticate();
@@ -73,11 +95,14 @@ class AuthController extends AsyncNotifier<UserModel?> {
       if (idToken == null) {
         throw Exception('Google ID token missing');
       }
-      return _repo.googleLogin(idToken);
+      final user = await _repo.googleLogin(idToken);
+      if (user.token != null) await _storage.saveToken(user.token!);
+      return user;
     });
   }
 
   Future<void> logout() async {
+    await _storage.deleteToken();
     state = const AsyncData(null);
   }
 }
