@@ -1,0 +1,56 @@
+# Miscellaneous
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+yarn-debug.log
+dist/
+coverage/
+.env
+.npm/
+
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Flutter - Android
+# Using **/ to match these files in any subdirectory
+**/android/local.properties
+**/android/.gradle
+**/android/captures/
+**/android/gradle-wrapper.jar
+
+# Flutter - iOS
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Generated.xcconfig
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.*
+**/ios/.symlinks/
+**/ios/Pods/
+
+# Flutter - Web
+lib/generated_plugin_registrant.dart
+
+# Flutter - MacOS
+**/macos/Flutter/ephemeral/
+
+# Flutter - Windows
+**/windows/flutter/ephemeral/
+
+# Flutter - Linux
+**/linux/flutter/ephemeral/
+
+# Exceptions
+# Keep gitkeep files if they exist
+!**.gitkeep
