@@ -60,6 +60,30 @@ export const updateDocumentTitle = async (documentId, userId, title) => {
   return doc;
 }
 
+export const updateDocumentContent = async (documentId, content, userId) => {
+  const doc = await Document.findById(documentId);
+  if (!doc) throw new Error("Document not found");
+
+  doc.content = content;
+  doc.saveState = {
+    status: "saved",
+    lastSavedAt: new Date(),
+  };
+  doc.updatedAt = new Date();
+
+  // Update basic analytics
+  if (!doc.stats) doc.stats = { totalEdits: 0, wordCount: 0 };
+  doc.stats.totalEdits += 1;
+  doc.stats.lastEditor = userId;
+  
+  // Basic word count logic
+  doc.stats.wordCount = JSON.stringify(content)
+    .replace(/<[^>]+>/g, "")
+    .split(/\s+/).length;
+
+  return await doc.save();
+};
+
 
 // UPDATE PAGE SETTINGS 
 export const updatePageSettings = async (documentId, userId, pageSettings) => { 
@@ -135,5 +159,16 @@ export const restoreFromTrash = async (id, userId) => {
   });
   await activityService.logActivity(id, userId, "restored");
 };
- 
+
+export const getTrashDocuments = async (userId) => {
+  return Document.find({
+    isDeleted: true,
+    $or: [
+      { ownerId: userId },
+      { "collaborators.userId": userId } // Collaborators should also see docs they had access to
+    ]
+  })
+  .sort({ deletedAt: -1 }) // Show most recently deleted first
+  .select("title updatedAt deletedAt ownerId"); // Optimize: don't fetch heavy content
+};
 // DELETE DOCUMENT

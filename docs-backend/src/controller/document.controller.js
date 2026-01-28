@@ -1,6 +1,6 @@
 import * as documentService from "../service/document.service.js";
 import * as versionService from "../service/version.service.js";
-import { broadcastToDocument } from "../sockets/socket.js";
+import { socketEmitter } from "../sockets/emitter.js";
 
 // Standard response helper
 const sendResponse = (res, status, data, message = "Success") => {
@@ -85,9 +85,11 @@ export const restoreVersion = async (req, res) => {
     if (!versionId) throw new Error("Version ID is required");
     
     const newVersion = await versionService.restoreVersion(req.params.id, versionId, req.user.id);
-    
-    // Broadcast the restored content to all connected sockets
-    broadcastToDocument(req.params.id, "receive-changes", newVersion.snapshot);
+    socketEmitter.emit("broadcast", {
+        documentId: req.params.id,
+        event: "receive-changes",
+        data: newVersion.snapshot
+    });
     
     sendResponse(res, 200, null, "Version restored successfully");
   } catch (error) {
@@ -124,4 +126,26 @@ export const deleteDocument = async (req, res) => {
   } catch (error) {
     handleError(res, error);
   }
+};
+
+export const getTrash = async (req, res) => {
+  try {
+    const docs = await documentService.getTrashDocuments(req.user.id);
+    sendResponse(res, 200, docs);
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+export const restoreTrash = async (req, res) => {
+  try {
+    // We don't use 'canEdit' middleware here because the doc is deleted 
+    // and might not be found by standard queries.
+    // We handle permission inside the service or a specific check.
+    
+    await documentService.restoreFromTrash(req.params.id, req.user.id);
+    sendResponse(res, 200, null, "Document restored successfully");
+  } catch (error) {
+    handleError(res, error);
+  }   
 };

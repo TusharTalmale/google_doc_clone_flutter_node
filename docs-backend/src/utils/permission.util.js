@@ -1,16 +1,19 @@
+// utils/permission.util.js
 export const hasEditAccess = (doc, userId) => {
+  const uid = userId.toString(); // Ensure string comparison
   return (
-    doc.ownerId.toString() === userId ||
+    doc.ownerId.toString() === uid ||
     doc.collaborators.some(
       (c) =>
-        c.userId.toString() === userId && ["owner", "editor"].includes(c.role)
+        c.userId.toString() === uid && ["owner", "editor"].includes(c.role)
     )
   );
 };
 
 export const hasViewAccess = (doc, userId) => {
+  const uid = userId.toString();
   return (
-    doc.ownerId.toString() === userId ||
-    doc.collaborators.some((c) => c.userId.toString() === userId)
+    doc.ownerId.toString() === uid ||
+    doc.collaborators.some((c) => c.userId.toString() === uid)
   );
 };

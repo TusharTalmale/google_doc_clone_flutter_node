@@ -1,16 +1,17 @@
-import Document from "../model/Document.js";
 import DocumentVersion from "../model/DocumentVersion.js";
+import * as documentService from "../service/document.service.js";
 
 export const createVersion = async (documentId, content, userId, reason = "manual") => {
-  const doc = await Document.findById(documentId);
-  if (!doc) throw new Error("Document not found");
+  // const doc = await Document.findById(documentId);
+  // if (!doc) throw new Error("Document not found");
 
-  // Update document content and save state
-  doc.content = content;
-  doc.saveState = {
-    status: "saved",
-    lastSavedAt: new Date()
-  };
+  // // Update document content and save state
+  // doc.content = content;
+  // doc.saveState = {
+  //   status: "saved",
+  //   lastSavedAt: new Date()
+  // };
+  const doc = await documentService.updateDocumentContent(documentId, content, userId);
 
   // Increment version
   doc.versioning.currentVersion += 1;

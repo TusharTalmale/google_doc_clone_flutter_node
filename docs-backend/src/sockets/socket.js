@@ -1,12 +1,12 @@
 import { Server } from "socket.io";
 import { socketAuth } from "../middleware/socketAuth.js";
 import * as presenceStore from "./presence.store.js";
-import * as autosaveService from "../service/autosave.service.js";
-import * as documentService from "../service/document.service.js";
+import * as autosaveService from "../service/document.service.js";
 import * as versionService from "../service/version.service.js";
 import * as activityService from "../service/activity.service.js";
 import { hasEditAccess } from "../utils/permission.util.js";
 import Document from "../model/Document.js";
+import { socketEmitter } from "./emitter.js";
 
 let io;
 const lastSave = {}; // Throttle map: { documentId: timestamp }
@@ -21,10 +21,24 @@ export const initializeSocket = (server) => {
 
   // Middleware
   io.use(socketAuth);
+  socketEmitter.on("broadcast", ({ documentId, event, data }) => {
+    if (io) {
+      io.to(documentId).emit(event, data);
+      console.log(`📡 Broadcasted '${event}' to doc ${documentId}`);
+    }
+  });
 
   io.on("connection", (socket) => {
     const user = socket.user;
-    
+      console.log("Socket connected:", socket.id);
+
+     socket.on("health-ping", () => {
+    socket.emit("health-pong", {
+      socketId: socket.id,
+      status: "connected",
+      time: new Date(),
+    });
+  });
     // 1. Join Document
     socket.on("join-document", (documentId) => {
       socket.join(documentId);
@@ -116,16 +130,12 @@ export const initializeSocket = (server) => {
       });
     });
 
-    socket.on("disconnect", () => {
-      // Standard disconnect logic handled in 'disconnecting' to access rooms
-      console.log(`User ${user.name} disconnected`);
-    });
+  socket.on("disconnect", (reason) => {
+  presenceStore.cleanupSocket(socket.id);
+  console.log(`❌ ${socket.id} disconnected: ${reason}`);
+});
+
   });
 };
+export const getIO = () => io;
 
-// Helper to broadcast updates from Controllers (e.g., Restore)
-export const broadcastToDocument = (documentId, event, data) => {
-  if (io) {
-    io.to(documentId).emit(event, data);
-  }
-};
