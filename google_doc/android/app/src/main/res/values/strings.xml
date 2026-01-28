@@ -5,12 +5,12 @@
 
     <!-- Android OAuth Client ID -->
     <string name="default_web_client_id">
-        ANDRPOFYOUR_WEB_CLIENT_ID_HERE.apps.googleusercontent.com
+        272866144375-4mq14te71em7irprcviff6bgvr4avg79.apps.googleusercontent.com
     </string>
 
     <!-- Web OAuth Client ID (used for serverClientId in Google Sign In) -->
     <string name="web_client_id">
-        2YOUR_WEB_CLIENT_ID_HERE.apps.googleusercontent.com
+        272866144375-kl18u30kuknm4t89b6l35p5g6u8l1lfr.apps.googleusercontent.com
     </string>
 
 </resources>

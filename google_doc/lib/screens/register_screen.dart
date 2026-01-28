@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../feature/auth/auth_controller.dart';
+import '../widgets/auth_widgets.dart';
 
 class RegisterScreen extends ConsumerWidget {
   RegisterScreen({super.key});
@@ -17,17 +17,16 @@ class RegisterScreen extends ConsumerWidget {
     ref.listen(authControllerProvider, (_, next) {
       next.whenOrNull(
         error: (e, _) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.toString())),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(e.toString())));
         },
       );
     });
 
     return Scaffold(
       body: auth.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, __) => _form(context, ref),
         data: (_) => _form(context, ref),
       ),
@@ -35,32 +34,51 @@ class RegisterScreen extends ConsumerWidget {
   }
 
   Widget _form(BuildContext context, WidgetRef ref) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return AuthCard(
       children: [
-        TextField(controller: _nameController),
-        TextField(controller: _emailController),
-        TextField(
-          controller: _passwordController,
-          obscureText: true,
+        const AuthHeader(
+          title: "Create Account",
+          subtitle: "Start your journey with us",
         ),
-        ElevatedButton(
+        const SizedBox(height: 24),
+        AuthTextField(controller: _nameController, label: "Name"),
+        const SizedBox(height: 16),
+        AuthTextField(
+          controller: _emailController,
+          label: "Email",
+          keyboardType: TextInputType.emailAddress,
+        ),
+        const SizedBox(height: 16),
+        AuthTextField(
+          controller: _passwordController,
+          label: "Password",
+          obscure: true,
+        ),
+        const SizedBox(height: 24),
+        AuthPrimaryButton(
+          text: "Register",
           onPressed: () {
-            ref.read(authControllerProvider.notifier).register(
+            ref
+                .read(authControllerProvider.notifier)
+                .register(
                   _nameController.text.trim(),
                   _emailController.text.trim(),
                   _passwordController.text.trim(),
                 );
           },
-          child: const Text("Register"),
         ),
-        ElevatedButton(
-          onPressed: () {
-            ref
-                .read(authControllerProvider.notifier)
-                .signInWithGoogle();
-          },
-          child: const Text("Sign up with Google"),
+        const SizedBox(height: 16),
+        const AuthDivider(),
+        const SizedBox(height: 16),
+        GoogleAuthButton(
+          text: "Sign up with Google",
+          onPressed: () =>
+              ref.read(authControllerProvider.notifier).signInWithGoogle(),
+        ),
+        const SizedBox(height: 16),
+        AuthFooter(
+          text: "Already have an account? Login",
+          onPressed: () => Navigator.pop(context),
         ),
       ],
     );

@@ -1,10 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_doc/widgets/google_sign_in_stub.dart' as web show renderButton;
-import 'package:google_sign_in_web/google_sign_in_web.dart'
-    if (dart.library.io) 'google_sign_in_stub.dart'
+import 'google_sign_in_stub.dart'
+    if (dart.library.js_interop) 'package:google_sign_in_web/web_only.dart'
     as web;
-
 
 /// ---------- AUTH CARD ----------
 class AuthCard extends StatelessWidget {
@@ -119,7 +117,7 @@ class GoogleAuthButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (kIsWeb) {
-      // On Web, we must use the button rendered by the Google Identity Services SDK
+      // On Web, use the Google Identity Services SDK button
       return web.renderButton();
     }
     return OutlinedButton.icon(

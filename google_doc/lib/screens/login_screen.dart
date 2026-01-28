@@ -10,10 +10,9 @@ class LoginScreen extends ConsumerWidget {
   final _passwordController = TextEditingController();
 
   void _login(WidgetRef ref) {
-    ref.read(authControllerProvider.notifier).login(
-          _emailController.text.trim(),
-          _passwordController.text.trim(),
-        );
+    ref
+        .read(authControllerProvider.notifier)
+        .login(_emailController.text.trim(), _passwordController.text.trim());
   }
 
   @override
@@ -23,17 +22,16 @@ class LoginScreen extends ConsumerWidget {
     ref.listen(authControllerProvider, (_, next) {
       next.whenOrNull(
         error: (e, _) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.toString())),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(e.toString())));
         },
       );
     });
 
     return Scaffold(
       body: auth.when(
-        loading: () =>
-            const Center(child: CircularProgressIndicator()),
+        loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, __) => _buildForm(context, ref),
         data: (_) => _buildForm(context, ref),
       ),
@@ -43,28 +41,33 @@ class LoginScreen extends ConsumerWidget {
   Widget _buildForm(BuildContext context, WidgetRef ref) {
     return AuthCard(
       children: [
-        const AuthHeader(
-          title: "Sign In",
-          subtitle: "Welcome back",
-        ),
+        const AuthHeader(title: "Sign In", subtitle: "Welcome back"),
+        const SizedBox(height: 24),
         AuthTextField(
           controller: _emailController,
           label: "Email",
+          keyboardType: TextInputType.emailAddress,
         ),
+        const SizedBox(height: 16),
         AuthTextField(
           controller: _passwordController,
           label: "Password",
           obscure: true,
         ),
-        AuthPrimaryButton(
-          text: "Sign In",
-          onPressed: () => _login(ref),
-        ),
+        const SizedBox(height: 24),
+        AuthPrimaryButton(text: "Sign In", onPressed: () => _login(ref)),
+        const SizedBox(height: 16),
+        const AuthDivider(),
+        const SizedBox(height: 16),
         GoogleAuthButton(
           text: "Sign in with Google",
           onPressed: () =>
-              ref.read(authControllerProvider.notifier)
-                  .signInWithGoogle(),
+              ref.read(authControllerProvider.notifier).signInWithGoogle(),
+        ),
+        const SizedBox(height: 16),
+        AuthFooter(
+          text: "Don't have an account? Register",
+          onPressed: () => Navigator.pushNamed(context, '/register'),
         ),
       ],
     );
