@@ -5,6 +5,7 @@ import * as autosaveService from "../service/autosave.service.js";
 import * as documentService from "../service/document.service.js";
 import * as versionService from "../service/version.service.js";
 import * as activityService from "../service/activity.service.js";
+import { hasEditAccess } from "../utils/permission.util.js";
 import Document from "../model/Document.js";
 
 let io;
@@ -43,8 +44,8 @@ export const initializeSocket = (server) => {
     // 2. Real-time Typing (Broadcasting Deltas)
     socket.on("send-changes", async ({ documentId, delta }) => {
       // Security: Check permissions
-      const allowed = await canEdit(documentId, user._id.toString());
-      if (!allowed) return;
+      const doc = await Document.findById(documentId);
+      if (!doc || !hasEditAccess(doc, user._id.toString())) return;
 
       // Broadcast delta to everyone ELSE in the room
       socket.to(documentId).emit("receive-changes", delta);
@@ -57,11 +58,22 @@ export const initializeSocket = (server) => {
       socket.to(documentId).emit("presence-update", currentUsers);
     });
 
-    // 4. Autosave (Triggered by frontend idle timer)
+    // 4. Typing Indicator
+    socket.on("typing-start", (documentId) => {
+      const users = presenceStore.setTyping(documentId, socket.id, true);
+      socket.to(documentId).emit("presence-update", users);
+    });
+
+    socket.on("typing-stop", (documentId) => {
+      const users = presenceStore.setTyping(documentId, socket.id, false);
+      socket.to(documentId).emit("presence-update", users);
+    });
+
+    // 5. Autosave (Triggered by frontend idle timer)
     socket.on("save-document", async ({ documentId, content }) => {
       // Security: Check permissions
-      const allowed = await canEdit(documentId, user._id.toString());
-      if (!allowed) return;
+      const doc = await Document.findById(documentId);
+      if (!doc || !hasEditAccess(doc, user._id.toString())) return;
 
       // Throttle: Prevent spamming saves (max 1 save per 2 seconds per doc)
       const now = Date.now();
@@ -78,11 +90,11 @@ export const initializeSocket = (server) => {
       }
     });
 
-    // 5. Manual/Force Save (Creates Version)
+    // 6. Manual/Force Save (Creates Version)
     socket.on("force-save", async ({ documentId, content }) => {
       // Security: Check permissions
-      const allowed = await canEdit(documentId, user._id.toString());
-      if (!allowed) return;
+      const doc = await Document.findById(documentId);
+      if (!doc || !hasEditAccess(doc, user._id.toString())) return;
 
       try {
         await versionService.createVersion(documentId, content, user._id);
@@ -93,7 +105,7 @@ export const initializeSocket = (server) => {
       }
     });
 
-    // 6. Disconnect
+    // 7. Disconnect
     socket.on("disconnecting", () => {
       const rooms = [...socket.rooms];
       rooms.forEach((documentId) => {
@@ -116,17 +128,4 @@ export const broadcastToDocument = (documentId, event, data) => {
   if (io) {
     io.to(documentId).emit(event, data);
   }
-};
-
-// Helper to check permissions inside socket events
-const canEdit = async (documentId, userId) => {
-  const doc = await Document.findById(documentId);
-  if (!doc) return false;
-
-  const isOwner = doc.ownerId.toString() === userId;
-  const isEditor = doc.collaborators.some(
-    (c) => c.userId.toString() === userId && (c.role === "owner" || c.role === "editor")
-  );
-
-  return isOwner || isEditor;
 };

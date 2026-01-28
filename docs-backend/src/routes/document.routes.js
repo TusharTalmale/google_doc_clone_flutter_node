@@ -1,6 +1,6 @@
 import express from "express";
 import {verifyToken} from "../utils/auth.middleware.js";
-import {canEdit } from "../utils/permission.middleware.js";
+import { canEdit } from "../utils/permission.middleware.js";
 import * as documentController from "../controller/document.controller.js";
 
 const router = express.Router();

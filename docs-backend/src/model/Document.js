@@ -126,6 +126,15 @@ const documentSchema = new mongoose.Schema({
   },
 
   // -------------------
+  // Analytics
+  // -------------------
+  stats: {
+    totalEdits: { type: Number, default: 0 },
+    wordCount: { type: Number, default: 0 },
+    lastEditor: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+  },
+
+  // -------------------
   // Soft delete (Trash)
   // -------------------
   isDeleted: {

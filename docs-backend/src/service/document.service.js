@@ -1,6 +1,7 @@
 import Document from "../model/Document.js";
 import User from "../model/User.js";
 import * as activityService from "./activity.service.js";
+import { hasEditAccess, hasViewAccess } from "../utils/permission.util.js";
 
 // create doc 
 export const createDocument = async (userId) => { 
@@ -37,10 +38,7 @@ export const getDocumentById = async (documentId, userId) => {
         throw new Error("Document not found or deleted");
     }
     
-    const isAllowed = document.ownerId.toString() === userId || 
-                      document.collaborators.some(c => c.userId.toString() === userId);
-
-    if (!isAllowed) throw new Error("Not authorized");
+    if (!hasViewAccess(document, userId)) throw new Error("Not authorized");
 
     return document;
 } 
@@ -48,9 +46,8 @@ export const getDocumentById = async (documentId, userId) => {
 export const updateDocumentTitle = async (documentId, userId, title) => {
   const doc = await Document.findById(documentId);
   if (!doc) throw new Error("Document not found");
-  if (doc.ownerId.toString() !== userId && !doc.collaborators.some(c => c.userId.toString() === userId)) {
-    throw new Error("You are not authorized to update this document");
-  }
+  
+  if (!hasEditAccess(doc, userId)) throw new Error("You are not authorized to update this document");
 
   doc.title = title;
   doc.updatedAt = Date.now();
@@ -69,11 +66,12 @@ export const updatePageSettings = async (documentId, userId, pageSettings) => {
     const doc = await Document.findById(documentId);
     if (!doc) throw new Error("Document not found");
     
-    if (doc.ownerId.toString() !== userId && !doc.collaborators.some(c => c.userId.toString() === userId)) {
-        throw new Error("You are not authorized to update this document");
-    }
+    if (!hasEditAccess(doc, userId)) throw new Error("You are not authorized to update this document");
     
-    doc.pageSettings = pageSettings;
+    doc.page = {
+        ...doc.page,
+        ...pageSettings
+    };
     doc.updatedAt = Date.now();
     await doc.save();
     return doc

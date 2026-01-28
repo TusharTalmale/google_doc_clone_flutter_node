@@ -15,6 +15,16 @@ export const autoSave = async (documentId, content, userId) => {
   };
   doc.updatedAt = new Date();
   
+  // Update analytics
+  if (!doc.stats) doc.stats = { totalEdits: 0, wordCount: 0 };
+  
+  doc.stats.totalEdits += 1;
+  doc.stats.lastEditor = userId;
+  doc.stats.wordCount = JSON.stringify(content)
+    .replace(/<[^>]+>/g, "")
+    .split(/\s+/).length;
+
+
   // We do NOT increment version here. 
   // Version snapshots are handled by a separate timer or manual action.
   
