@@ -48,5 +48,11 @@ app.*.map.json
 lib/config.dart 
 # Google configuration files
 android/app/google-services.json
+
+# Google OAuth Client ID files (do not commit)
+android/app/src/main/res/values/strings.xml
+lib/feature/auth/auth_controller.dart
+web/index.html
 ios/Runner/GoogleService-Info.plist 
 web/firebase-messaging-sw.js    
+**/android/app/src/main/res/values/strings.xml

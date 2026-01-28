@@ -15,6 +15,11 @@ pnpm-debug.log*
 !.env.example
 
 # =========================
+# Google OAuth credentials (do not commit)
+# =========================
+# GOOGLE_CLIENT_ID is stored in .env which is already ignored
+
+# =========================
 # Build / dist
 # =========================
 dist/

@@ -16,15 +16,23 @@ export const validatePassword = (req, res, next) => {
 
 export const verifyToken = (req, res, next) => {
   const authHeader = req.header("Authorization");
-  if (!authHeader) return res.status(401).json({ message: "Access Denied" });
 
-  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+  if (!authHeader)
+    return res.status(401).json({ message: "Access denied" });
+
+  const token = authHeader.startsWith("Bearer ")
+    ? authHeader.slice(7)
+    : authHeader;
 
   try {
-    const verified = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = verified;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = {
+      id: decoded.id
+    };
+
     next();
-  } catch (err) {
-    res.status(400).json({ message: "Invalid Token" });
+  } catch (error) {
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
 };

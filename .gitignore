@@ -29,7 +29,13 @@ build/
 **/android/.gradle
 **/android/captures/
 **/android/gradle-wrapper.jar
-
+**/android/app/google-services.json
+**/android/app/src/main/res/values/strings.xml
+**/lib/feature/auth/auth_controller.dart
+**/web/index.html
+**/ios/Runner/GoogleService-Info.plist 
+**/web/firebase-messaging-sw.js   
+**/android/app/src/main/res/values/strings.xml 
 # Flutter - iOS
 **/ios/Flutter/App.framework
 **/ios/Flutter/Flutter.framework

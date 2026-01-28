@@ -29,7 +29,7 @@ export const registerUser = async ({ name, email, password }) => {
 };
 
 export const loginUser = async ({ email, password }) => {
-  const user = await User.findOne({ email });
+const user = await User.findOne({ email }).select("+password");
   if (!user) {
     throw new Error("Invalid credentials");
   }
@@ -53,9 +53,7 @@ export const googleLogin = async (idToken) => {
   let user = await User.findOne({ email });
 
   if (!user) {
-    const randomPassword = Math.random().toString(36).slice(-8);
-    const hashedPassword = await bcrypt.hash(randomPassword, 10);
-    user = await User.create({ email, name, profilePic: picture, password: hashedPassword });
+    user = await User.create({ email, name, profilePic: picture, password: null , provider: "google"});
   }
 
   const token = generateToken(user);
