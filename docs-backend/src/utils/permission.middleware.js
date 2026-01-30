@@ -24,3 +24,23 @@ export const canEdit = async (req, res, next) => {
     res.status(500).json({ message: "Server error checking permissions" });
   }
 };
+
+export const hasEditAccess = (doc, userId) => {
+  const uid = userId.toString(); // Ensure string comparison
+  return (
+    doc.ownerId.toString() === uid ||
+    doc.collaborators.some(
+      (c) =>
+        c.userId.toString() === uid && ["owner", "editor"].includes(c.role)
+    )
+  );
+};
+
+export const hasViewAccess = (doc, userId) => {
+  if (doc.isPublic) return true;
+  const uid = userId.toString();
+  return (
+    doc.ownerId.toString() === uid ||
+    doc.collaborators.some((c) => c.userId.toString() === uid)
+  );
+};

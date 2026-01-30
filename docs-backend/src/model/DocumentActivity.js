@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
 
 const documentActivitySchema = new mongoose.Schema({
-  // documentId: {
-  //   type: mongoose.Schema.Types.ObjectId,
-  //   ref: "Document",
-  //   required: true,
-  //   index: true
-  // },
+  documentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Document",
+    required: true,
+    index: true
+  },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -14,8 +14,8 @@ const documentActivitySchema = new mongoose.Schema({
   },
   action: {
     type: String,
-    required: true
-    // e.g., "created", "renamed", "shared", "removed_collaborator", "moved_to_trash", "restored"
+    required: true,
+     enum: ["created", "renamed", "shared", "removed_collaborator", "moved_to_trash", "restored", "opened", "edited"]
   },
   metadata: {
     type: mongoose.Schema.Types.Mixed,

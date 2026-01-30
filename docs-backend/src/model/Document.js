@@ -6,26 +6,27 @@ const collaboratorSchema = new mongoose.Schema({
     ref: "User",
     required: true
   },
-
   role: {
     type: String,
-    enum: ["owner", "editor", "viewer"],
+    enum: ["owner", "editor", "viewer", "commenter"], // Added "commenter"
     default: "editor"
   },
-
   color: {
     type: String,
-    default: "#2196f3"
+    default: null // Will be generated dynamically
   },
-
   joinedAt: {
     type: Date,
     default: Date.now
   },
-
   lastActive: {
     type: Date,
     default: Date.now
+  },
+  // Track what they're currently editing (for "User editing Section 3" feature)
+  currentSection: {
+    type: Number,
+    default: null
   }
 }, { _id: false });
 
@@ -92,6 +93,49 @@ const documentSchema = new mongoose.Schema({
       type: String,
       default: "#FFFFFF"
     }
+  },
+
+  revision: {
+    type: Number,
+    default: 0
+  },
+
+  // Link sharing
+  isPublic: {
+    type: Boolean,
+    default: false
+  },
+  
+  publicAccess: {
+    type: String,
+    enum: ["view", "comment", "edit"],
+    default: "view"
+  },
+  
+  shareableLink: {
+    type: String,
+    unique: true,
+    sparse: true,
+    index: true
+  },
+
+  // Settings
+  settings: {
+    suggestionMode: { type: Boolean, default: false },
+    defaultFont: { type: String, default: "Arial" },
+    lineSpacing: { type: Number, default: 1.15 }
+  },
+
+  // Favorite/Starred
+  isFavorite: [{
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    addedAt: { type: Date, default: Date.now }
+  }],
+
+  // Thumbnail for list view (base64 of first page or S3 URL)
+  thumbnail: {
+    type: String,
+    default: ""
   },
 
   // -------------------

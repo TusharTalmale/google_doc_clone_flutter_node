@@ -2,6 +2,7 @@ import Document from "../model/Document.js";
 import User from "../model/User.js";
 import * as activityService from "./activity.service.js";
 import { hasEditAccess, hasViewAccess } from "../utils/permission.util.js";
+const { deleteYDoc } = require('../yjs.store.js');
 
 // create doc 
 export const createDocument = async (userId) => { 
@@ -27,7 +28,8 @@ export const getAllDocuments = async (userId) => {
             {"collaborators.userId" : userId}
         ]
     
-}).sort({createdAt : -1});
+}).sort({createdAt : -1})
+.select('title ownerId updatedAt collaborators stats isFavorite page');
 };
 
 // get single doc
@@ -77,9 +79,8 @@ export const updateDocumentContent = async (documentId, content, userId) => {
   doc.stats.lastEditor = userId;
   
   // Basic word count logic
-  doc.stats.wordCount = JSON.stringify(content)
-    .replace(/<[^>]+>/g, "")
-    .split(/\s+/).length;
+  const text = Array.isArray(content) ? content.map(op => typeof op.insert === 'string' ? op.insert : "").join("") : "";
+  doc.stats.wordCount = text.trim().split(/\s+/).filter(w => w.length > 0).length;
 
   return await doc.save();
 };
@@ -150,6 +151,7 @@ export const moveToTrash = async (id, userId) => {
     deletedAt: new Date()
   });
   await activityService.logActivity(id, userId, "moved_to_trash");
+  await deleteYDoc(id); 
 };
 
 export const restoreFromTrash = async (id, userId) => {

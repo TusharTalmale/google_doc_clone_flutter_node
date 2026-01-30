@@ -1,125 +1,78 @@
 import { Server } from "socket.io";
 import { socketAuth } from "./socketAuth.js";
+import { getIO, socketEmitter } from "./emitter.js";
 import * as presenceStore from "./presence.store.js";
-import * as autosaveService from "../service/document.service.js";
-import * as versionService from "../service/version.service.js";
-import * as activityService from "../service/activity.service.js";
-import { hasEditAccess } from "../utils/permission.util.js";
+import * as documentHandler from "./handlers/document.handler.js";
+import * as collaborationHandler from "./handlers/collaboration.handler.js";
 import Document from "../model/Document.js";
-import { socketEmitter } from "./emitter.js";
 
 let io;
-const lastSave = {}; // Throttle map: { documentId: timestamp }
 
 export const initializeSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: "*", // Configure this for production
+      origin: process.env.CLIENT_URL || "*",
       methods: ["GET", "POST"],
     },
   });
 
   // Middleware
   io.use(socketAuth);
+
+  // Handle Emitter events (for HTTP routes to trigger socket events)
+  const ALLOWED_EVENTS = ['receive-changes', 'new-comment', 'presence-update'];
   socketEmitter.on("broadcast", ({ documentId, event, data }) => {
-    if (io) {
+    if (io && ALLOWED_EVENTS.includes(event)) {
       io.to(documentId).emit(event, data);
-      console.log(`📡 Broadcasted '${event}' to doc ${documentId}`);
+    }
+  });
+
+  socketEmitter.on("permission-revoked", ({ documentId, userId }) => {
+    if (io) {
+      const room = io.sockets.adapter.rooms.get(documentId);
+      if (room) {
+        for (const socketId of room) {
+          const socket = io.sockets.sockets.get(socketId);
+          if (socket && socket.user && socket.user._id.toString() === userId) {
+            socket.leave(documentId);
+            socket.emit("error", { message: "Permission revoked" });
+          }
+        }
+      }
     }
   });
 
   io.on("connection", (socket) => {
-    const user = socket.user;
-      console.log("Socket connected:", socket.id);
+    console.log("Socket connected:", socket.id, "User:", socket.user.name);
 
-     socket.on("health-ping", () => {
-    socket.emit("health-pong", {
-      socketId: socket.id,
-      status: "connected",
-      time: new Date(),
-    });
-  });
-    // 1. Join Document
-    socket.on("join-document", (documentId) => {
-      socket.join(documentId);
-      
-      // Add to presence store
-      const currentUsers = presenceStore.addPresence(documentId, socket.id, user);
-      
-      // Broadcast new presence list to everyone in the room
-      io.to(documentId).emit("presence-update", currentUsers);
-      
-      // Log "opened" activity
-      activityService.logActivity(documentId, user._id, "opened");
-      
-      console.log(`User ${user.name} joined doc ${documentId}`);
+    // Health check
+    socket.on("health-ping", () => {
+      socket.emit("health-pong", {
+        socketId: socket.id,
+        status: "connected",
+        time: new Date(),
+      });
     });
 
-    // 2. Real-time Typing (Broadcasting Deltas)
+    // Document Operations
+    socket.on("join-document", documentHandler.handleDocumentJoin(socket, io));
+    socket.on("yjs-update", documentHandler.handleYjsUpdate(socket, io));
+    socket.on("awareness-update", documentHandler.handleAwarenessUpdate(socket, io));
+
+    // Collaboration Features
+    socket.on("typing-start", collaborationHandler.handleTypingStart(socket, io));
+    socket.on("typing-stop", collaborationHandler.handleTypingStop(socket, io));
+    socket.on("cursor-move", collaborationHandler.handleCursorMove(socket, io));
+    socket.on("selection-change", collaborationHandler.handleSelectionChange(socket, io));
+
+    // Legacy support (remove after migrating to Yjs)
     socket.on("send-changes", async ({ documentId, delta }) => {
-      // Security: Check permissions
       const doc = await Document.findById(documentId);
-      if (!doc || !hasEditAccess(doc, user._id.toString())) return;
-
-      // Broadcast delta to everyone ELSE in the room
+      if (!doc) return;
       socket.to(documentId).emit("receive-changes", delta);
     });
 
-    // 3. Cursor Tracking
-    socket.on("cursor-move", ({ documentId, cursor }) => {
-      const currentUsers = presenceStore.updateCursor(documentId, socket.id, cursor);
-      // Broadcast cursor updates (throttle this on frontend usually, but we emit here)
-      socket.to(documentId).emit("presence-update", currentUsers);
-    });
-
-    // 4. Typing Indicator
-    socket.on("typing-start", (documentId) => {
-      const users = presenceStore.setTyping(documentId, socket.id, true);
-      socket.to(documentId).emit("presence-update", users);
-    });
-
-    socket.on("typing-stop", (documentId) => {
-      const users = presenceStore.setTyping(documentId, socket.id, false);
-      socket.to(documentId).emit("presence-update", users);
-    });
-
-    // 5. Autosave (Triggered by frontend idle timer)
-    socket.on("save-document", async ({ documentId, content }) => {
-      // Security: Check permissions
-      const doc = await Document.findById(documentId);
-      if (!doc || !hasEditAccess(doc, user._id.toString())) return;
-
-      // Throttle: Prevent spamming saves (max 1 save per 2 seconds per doc)
-      const now = Date.now();
-      if (lastSave[documentId] && now - lastSave[documentId] < 2000) return;
-      lastSave[documentId] = now;
-
-      try {
-        await autosaveService.updateDocumentContent(documentId, content, user._id);
-        // Notify everyone that the document is saved
-        io.to(documentId).emit("save-status", { status: "saved", lastSavedAt: new Date() });
-      } catch (error) {
-        console.error("Autosave failed:", error);
-        socket.emit("save-status", { status: "error", message: "Save failed" });
-      }
-    });
-
-    // 6. Manual/Force Save (Creates Version)
-    socket.on("force-save", async ({ documentId, content }) => {
-      // Security: Check permissions
-      const doc = await Document.findById(documentId);
-      if (!doc || !hasEditAccess(doc, user._id.toString())) return;
-
-      try {
-        await versionService.createVersion(documentId, content, user._id);
-        io.to(documentId).emit("save-status", { status: "saved", lastSavedAt: new Date() });
-        io.to(documentId).emit("version-created"); // Notify to refresh version list
-      } catch (error) {
-        console.error("Force save failed:", error);
-      }
-    });
-
-    // 7. Disconnect
+    // Disconnect
     socket.on("disconnecting", () => {
       const rooms = [...socket.rooms];
       rooms.forEach((documentId) => {
@@ -130,10 +83,10 @@ export const initializeSocket = (server) => {
       });
     });
 
-  socket.on("disconnect", (reason) => {
-  console.log(`❌ ${socket.id} disconnected: ${reason}`);
-});
-
+    socket.on("disconnect", (reason) => {
+      console.log(`❌ ${socket.id} disconnected: ${reason}`);
+    });
   });
 };
+
 export const getIO = () => io;

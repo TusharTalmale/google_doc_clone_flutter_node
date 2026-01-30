@@ -7,6 +7,7 @@ import connectDB from "./src/utils/db.js";
 import authRouter from "./src/routes/auth.route.js";
 import documentRouter from "./src/routes/document.routes.js";
 import versionRouter from "./src/routes/version.route.js";
+import commentRouter from "./routes/comment.routes.js";
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use(express.json());
 app.use("/api/auth", authRouter);
 app.use("/api/documents", documentRouter);
 app.use("/api/versions", versionRouter);
+app.use("/api/documents", commentRouter);
 
 initializeSocket(httpServer);
 

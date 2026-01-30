@@ -1,6 +1,9 @@
 import * as documentService from "../service/document.service.js";
 import * as versionService from "../service/version.service.js";
+import Document from "../model/Document.js";
+import mongoose from "mongoose";
 import { socketEmitter } from "../sockets/emitter.js";
+import crypto from "crypto";
 
 // Standard response helper
 const sendResponse = (res, status, data, message = "Success") => {
@@ -127,7 +130,86 @@ export const deleteDocument = async (req, res) => {
     handleError(res, error);
   }
 };
+export const generateShareLink = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { access = "view" } = req.body;
+    
+    const doc = await Document.findById(id);
+    if (!doc) throw new Error("Document not found");
+    
+    // Only owner can generate links
+    if (doc.ownerId.toString() !== req.user.id) {
+      throw new Error("Only owner can generate share links");
+    }
 
+    // Generate unique token
+    const shareToken = crypto.randomBytes(16).toString("hex");
+    
+    doc.shareableLink = shareToken;
+    doc.publicAccess = access;
+    doc.isPublic = true;
+    await doc.save();
+    
+    const link = `${process.env.CLIENT_URL}/doc/${id}?token=${shareToken}`;
+    sendResponse(res, 200, { link, access }, "Share link generated");
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+// Toggle favorite
+export const toggleFavorite = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+    
+    const doc = await Document.findByIdAndUpdate(id, [
+      {
+        $set: {
+          isFavorite: {
+            $cond: {
+              if: { $in: [new mongoose.Types.ObjectId(userId), "$isFavorite.userId"] },
+              then: { $filter: { input: "$isFavorite", cond: { $ne: ["$$this.userId", new mongoose.Types.ObjectId(userId)] } } },
+              else: { $concatArrays: ["$isFavorite", [{ userId: new mongoose.Types.ObjectId(userId), addedAt: new Date() }]] }
+            }
+          }
+        }
+      }
+    ], { new: true });
+
+    if (!doc) throw new Error("Document not found");
+
+    const isFav = doc.isFavorite.some(f => f.userId.toString() === userId);
+    sendResponse(res, 200, { isFavorite: isFav });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// Get document with public link (no auth required if token valid)
+export const getDocumentByShareLink = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { token } = req.query;
+    
+    const doc = await Document.findById(id)
+      .select("title content page collaborators isPublic publicAccess shareableLink ownerId");
+    
+    if (!doc) throw new Error("Document not found");
+    
+    // Check if valid share link
+    if (!doc.isPublic || doc.shareableLink !== token) {
+      throw new Error("Invalid or expired link");
+    }
+    
+    sendResponse(res, 200, {
+      document: doc,
+      accessLevel: doc.publicAccess // 'view', 'comment', or 'edit'
+    });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
 export const getTrash = async (req, res) => {
   try {
     const docs = await documentService.getTrashDocuments(req.user.id);
@@ -137,6 +219,40 @@ export const getTrash = async (req, res) => {
   }
 };
 
+export const updatePageSettings = async (req, res) => {
+  try {
+    const { size, orientation, margin, backgroundColor } = req.body;
+    const doc = await Document.findById(req.params.id);
+    
+    if (!doc) throw new Error("Document not found");
+    
+    const updates = {};
+    if (size) updates["page.size"] = size;
+    if (orientation) updates["page.orientation"] = orientation;
+    if (margin) {
+      if (margin.top < 0 || margin.top > 200 || 
+          margin.bottom < 0 || margin.bottom > 200 ||
+          margin.left < 0 || margin.left > 200 ||
+          margin.right < 0 || margin.right > 200) {
+         throw new Error("Invalid margin values");
+      }
+      Object.assign(updates, {
+        "page.margin.top": margin.top,
+        "page.margin.bottom": margin.bottom,
+        "page.margin.left": margin.left,
+        "page.margin.right": margin.right
+      });
+    }
+    if (backgroundColor) updates["page.backgroundColor"] = backgroundColor;
+    
+    Object.assign(doc.page, updates);
+    await doc.save();
+    
+    sendResponse(res, 200, doc.page, "Page settings updated");
+  } catch (error) {
+    handleError(res, error);
+  }
+};
 export const restoreTrash = async (req, res) => {
   try {
     // We don't use 'canEdit' middleware here because the doc is deleted 

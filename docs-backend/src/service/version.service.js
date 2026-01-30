@@ -13,12 +13,15 @@ export const createVersion = async (documentId, content, userId, reason = "manua
   // };
   const doc = await documentService.updateDocumentContent(documentId, content, userId);
 
-  // Increment version
-  doc.versioning.currentVersion += 1;
-  doc.versioning.lastSnapshotAt = new Date();
+  // // Increment version
+  // doc.versioning.currentVersion += 1;
+  // doc.versioning.lastSnapshotAt = new Date();
 
-  await doc.save();
-
+  // await doc.save();
+await Document.findByIdAndUpdate(documentId, {
+  $inc: { "versioning.currentVersion": 1 },
+  $set: { "versioning.lastSnapshotAt": new Date() }
+});
   // Create snapshot
   const version = await DocumentVersion.create({
     documentId,

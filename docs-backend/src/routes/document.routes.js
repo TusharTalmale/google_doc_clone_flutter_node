@@ -19,14 +19,18 @@ router.post("/title/:id", canEdit, documentController.updateTitle);
 router.post("/save/:id", canEdit,validateDocumentContent, documentController.saveDocument);
 router.get("/trash/all", documentController.getTrash); 
 router.post("/trash/restore/:id", documentController.restoreTrash); 
-router.post("/title/:id", canEdit, documentController.updateTitle);
 
 // Version Control
 router.get("/versions/:id", documentController.getVersions);
 router.post("/restore/:id", canEdit, documentController.restoreVersion);
 
 // Collaboration
-router.post("/share/:id", canEdit,validateDocumentContent, documentController.shareDocument);
+router.post("/share/:id", canEdit, documentController.shareDocument);
 router.post("/remove-collaborator/:id", canEdit, documentController.removeCollaborator);
+
+router.post("/:id/share-link", canEdit, documentController.generateShareLink);
+router.post("/:id/favorite", documentController.toggleFavorite);
+router.patch("/:id/page-settings", canEdit, documentController.updatePageSettings);
+router.get("/public/:id", documentController.getDocumentByShareLink);
 
 export default router;
