@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_doc/feature/auth/auth_controller.dart';
 import 'package:google_doc/screens/home_screen.dart';
-import 'package:google_doc/screens/login_screen.dart';
+import 'package:google_doc/screens/auth/login_screen.dart';
 
 class AuthWrapper extends ConsumerWidget {
   const AuthWrapper({super.key});

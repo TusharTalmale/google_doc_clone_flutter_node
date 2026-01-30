@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../feature/auth/auth_controller.dart';
-import '../widgets/auth_widgets.dart';
+import '../../widgets/auth_widgets.dart';
+import 'package:google_doc/feature/auth/auth_controller.dart';
 
-class RegisterScreen extends ConsumerWidget {
-  RegisterScreen({super.key});
+class LoginScreen extends ConsumerWidget {
+  LoginScreen({super.key});
 
-  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  void _login(WidgetRef ref) {
+    ref
+        .read(authControllerProvider.notifier)
+        .login(_emailController.text.trim(), _passwordController.text.trim());
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -27,22 +32,17 @@ class RegisterScreen extends ConsumerWidget {
     return Scaffold(
       body: auth.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => _form(context, ref),
-        data: (_) => _form(context, ref),
+        error: (_, __) => _buildForm(context, ref),
+        data: (_) => _buildForm(context, ref),
       ),
     );
   }
 
-  Widget _form(BuildContext context, WidgetRef ref) {
+  Widget _buildForm(BuildContext context, WidgetRef ref) {
     return AuthCard(
       children: [
-        const AuthHeader(
-          title: "Create Account",
-          subtitle: "Start your journey with us",
-        ),
+        const AuthHeader(title: "Sign In", subtitle: "Welcome back"),
         const SizedBox(height: 24),
-        AuthTextField(controller: _nameController, label: "Name"),
-        const SizedBox(height: 16),
         AuthTextField(
           controller: _emailController,
           label: "Email",
@@ -55,30 +55,19 @@ class RegisterScreen extends ConsumerWidget {
           obscure: true,
         ),
         const SizedBox(height: 24),
-        AuthPrimaryButton(
-          text: "Register",
-          onPressed: () {
-            ref
-                .read(authControllerProvider.notifier)
-                .register(
-                  _nameController.text.trim(),
-                  _emailController.text.trim(),
-                  _passwordController.text.trim(),
-                );
-          },
-        ),
+        AuthPrimaryButton(text: "Sign In", onPressed: () => _login(ref)),
         const SizedBox(height: 16),
         const AuthDivider(),
         const SizedBox(height: 16),
         GoogleAuthButton(
-          text: "Sign up with Google",
+          text: "Sign in with Google",
           onPressed: () =>
               ref.read(authControllerProvider.notifier).signInWithGoogle(),
         ),
         const SizedBox(height: 16),
         AuthFooter(
-          text: "Already have an account? Login",
-          onPressed: () => Navigator.pop(context),
+          text: "Don't have an account? Register",
+          onPressed: () => Navigator.pushNamed(context, '/register'),
         ),
       ],
     );

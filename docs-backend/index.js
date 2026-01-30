@@ -5,7 +5,7 @@ import {createServer } from "http";
 import { initializeSocket , getIO} from "./src/sockets/socket.js";
 import connectDB from "./src/utils/db.js";
 import authRouter from "./src/routes/auth.route.js";
-import documentRouter from "./src/routes/document.route.js";
+import documentRouter from "./src/routes/document.routes.js";
 import versionRouter from "./src/routes/version.route.js";
 
 dotenv.config();

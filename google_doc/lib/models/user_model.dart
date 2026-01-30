@@ -34,3 +34,71 @@ class UserModel {
     );
   }
 }
+
+
+// class UserModel {
+//   final String id;
+//   final String name;
+//   final String email;
+//   final String? profilePic;
+//   final String provider;
+//   final bool isEmailVerified;
+//   final bool isBlocked;
+
+//   UserModel({
+//     required this.id,
+//     required this.name,
+//     required this.email,
+//     this.profilePic,
+//     required this.provider,
+//     required this.isEmailVerified,
+//     required this.isBlocked,
+//   });
+
+//   // ---------- FROM JSON ----------
+//   factory UserModel.fromJson(Map<String, dynamic> json) {
+//     return UserModel(
+//       id: json['_id'] ?? json['id'],
+//       name: json['name'],
+//       email: json['email'],
+//       profilePic: json['profilePic'],
+//       provider: json['provider'] ?? 'local',
+//       isEmailVerified: json['isEmailVerified'] ?? true,
+//       isBlocked: json['isBlocked'] ?? false,
+//     );
+//   }
+
+//   // ---------- TO JSON ----------
+//   Map<String, dynamic> toJson() {
+//     return {
+//       '_id': id,
+//       'name': name,
+//       'email': email,
+//       'profilePic': profilePic,
+//       'provider': provider,
+//       'isEmailVerified': isEmailVerified,
+//       'isBlocked': isBlocked,
+//     };
+//   }
+
+//   // ---------- COPY ----------
+//   UserModel copyWith({
+//     String? id,
+//     String? name,
+//     String? email,
+//     String? profilePic,
+//     String? provider,
+//     bool? isEmailVerified,
+//     bool? isBlocked,
+//   }) {
+//     return UserModel(
+//       id: id ?? this.id,
+//       name: name ?? this.name,
+//       email: email ?? this.email,
+//       profilePic: profilePic ?? this.profilePic,
+//       provider: provider ?? this.provider,
+//       isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+//       isBlocked: isBlocked ?? this.isBlocked,
+//     );
+//   }
+// }

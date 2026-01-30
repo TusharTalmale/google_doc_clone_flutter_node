@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_doc/constant/api_constant.dart';
+import 'package:google_doc/utils/constant/api_constant.dart';
 import 'package:google_doc/models/user_model.dart';
 import 'package:google_doc/services/dio_client.dart';
 

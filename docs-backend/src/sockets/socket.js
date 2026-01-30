@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { socketAuth } from "../middleware/socketAuth.js";
+import { socketAuth } from "./socketAuth.js";
 import * as presenceStore from "./presence.store.js";
 import * as autosaveService from "../service/document.service.js";
 import * as versionService from "../service/version.service.js";
@@ -95,7 +95,7 @@ export const initializeSocket = (server) => {
       lastSave[documentId] = now;
 
       try {
-        await autosaveService.autoSave(documentId, content, user._id);
+        await autosaveService.updateDocumentContent(documentId, content, user._id);
         // Notify everyone that the document is saved
         io.to(documentId).emit("save-status", { status: "saved", lastSavedAt: new Date() });
       } catch (error) {
@@ -131,11 +131,9 @@ export const initializeSocket = (server) => {
     });
 
   socket.on("disconnect", (reason) => {
-  presenceStore.cleanupSocket(socket.id);
   console.log(`❌ ${socket.id} disconnected: ${reason}`);
 });
 
   });
 };
 export const getIO = () => io;
-

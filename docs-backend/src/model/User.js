@@ -105,11 +105,7 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// -------------------
-// Indexes
-// -------------------
-userSchema.index({ email: 1 });
-userSchema.index({ isDeleted: 1 });
+
 
 const User = mongoose.model("User", userSchema);
 
