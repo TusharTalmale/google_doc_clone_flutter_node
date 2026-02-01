@@ -1,150 +1,145 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:socket_io_client/socket_io_client.dart' as io;
-
+import 'dart:async';
+import 'dart:convert';
 import 'package:google_doc/utils/constant/api_constant.dart';
-import 'package:google_doc/utils/constant/socket_events.dart';
+import 'package:socket_io_client/socket_io_client.dart' as io;
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:google_doc/services/storage_service.dart';
+import 'package:google_doc/provider/connection_state_provider.dart';
 
-final socketServiceProvider = Provider<SocketService>((ref) {
-  final service = SocketService(ref);
+part 'socket_client.g.dart';
 
-  ref.onDispose(() {
-    service.disconnect();
-  });
+enum SocketConnectionState {
+  disconnected,
+  connecting,
+  connected,
+  reconnecting,
+  error,
+}
 
-  return service;
-});
-
-class SocketService {
-  final Ref _ref;
+@Riverpod(keepAlive: true)
+class SocketClient extends _$SocketClient {
   io.Socket? _socket;
+  final _connectionController =
+      StreamController<SocketConnectionState>.broadcast();
+  final _eventController = StreamController<Map<String, dynamic>>.broadcast();
 
-  SocketService(this._ref);
+  // Queue for events when offline
+  final List<Map<String, dynamic>> _offlineQueue = [];
 
-  bool get isConnected => _socket?.connected ?? false;
+  @override
+  Stream<SocketConnectionState> build() {
+    _connectionController.add(SocketConnectionState.disconnected);
 
-  // ===========================================================================
-  // CONNECT
-  // ===========================================================================
+    ref.listen<bool>(isOnlineProvider, (prev, next) {
+      if (next && !isConnected) {
+        connect();
+      }
+    });
+
+    ref.onDispose(() {
+      _connectionController.close();
+      _eventController.close();
+      disconnect();
+    });
+    return _connectionController.stream;
+  }
+
   Future<void> connect() async {
-    final token = await _ref.read(storageServiceProvider).getToken();
+    if (_socket?.connected == true) return;
 
-    if (token == null) return;
+    final token = await ref.read(storageServiceProvider).getToken();
+    if (token == null) {
+      _connectionController.add(SocketConnectionState.error);
+      return;
+    }
 
-    // already connected → do nothing
-    if (_socket != null && _socket!.connected) return;
+    _connectionController.add(SocketConnectionState.connecting);
 
     _socket = io.io(
       ApiConstants.baseUrl,
       io.OptionBuilder()
           .setTransports(['websocket'])
           .disableAutoConnect()
-          .enableReconnection() // ✅ auto reconnect
-          .setReconnectionAttempts(999)
+          .enableReconnection()
           .setReconnectionDelay(1000)
+          .setReconnectionDelayMax(5000)
+          .setRandomizationFactor(0.5)
           .setAuth({'token': token})
           .build(),
     );
 
+    _setupListeners();
     _socket!.connect();
+  }
 
+  void _setupListeners() {
     _socket!.onConnect((_) {
       print('✅ Socket connected: ${_socket!.id}');
+      _connectionController.add(SocketConnectionState.connected);
+      _flushOfflineQueue();
     });
 
     _socket!.onDisconnect((_) {
       print('❌ Socket disconnected');
+      _connectionController.add(SocketConnectionState.disconnected);
     });
 
-    _socket!.onConnectError((e) {
-      print('⚠️ Socket connect error: $e');
+    _socket!.onReconnectAttempt((attempt) {
+      print('🔄 Reconnect attempt: $attempt');
+      _connectionController.add(SocketConnectionState.reconnecting);
     });
-  }
 
-  // ===========================================================================
-  // CLIENT → SERVER
-  // ===========================================================================
+    _socket!.onConnectError((error) {
+      print('⚠️ Socket error: $error');
+      _connectionController.add(SocketConnectionState.error);
+    });
 
-  void joinDocument(String documentId) {
-    _emit(SocketEvents.joinDocument, documentId);
-  }
-
-  void sendChanges(String documentId, dynamic delta) {
-    _emit(SocketEvents.sendChanges, {
-      'documentId': documentId,
-      'delta': delta,
+    // Generic event handler - specific handlers will listen to _eventController
+    _socket!.onAny((event, data) {
+      _eventController.add({'event': event, 'data': data});
     });
   }
 
-  void updateCursor(String documentId, int index, int length, String userName) {
-    _emit(SocketEvents.cursorMove, {
-      'documentId': documentId,
-      'cursor': {
-        'index': index,
-        'length': length,
-        'name': userName,
-      }
-    });
-  }
+  void emit(String event, dynamic data) {
+    final payload = {
+      'event': event,
+      'data': data,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
 
-  void saveDocument(String documentId, dynamic content) {
-    _emit(SocketEvents.saveDocument, {
-      'documentId': documentId,
-      'content': content,
-    });
-  }
-
-  void typingStart(String documentId) {
-    _emit(SocketEvents.typingStart, documentId);
-  }
-
-  void typingStop(String documentId) {
-    _emit(SocketEvents.typingStop, documentId);
-  }
-
-  // ===========================================================================
-  // SERVER → CLIENT
-  // ===========================================================================
-
-  void onReceiveChanges(void Function(dynamic) callback) {
-    _on(SocketEvents.receiveChanges, callback);
-  }
-
-  void onPresenceUpdate(void Function(List<dynamic>) callback) {
-    _on(SocketEvents.presenceUpdate, (data) {
-      callback(List<dynamic>.from(data));
-    });
-  }
-
-  void onSaveStatus(void Function(Map<String, dynamic>) callback) {
-    _on(SocketEvents.saveStatus, (data) {
-      callback(Map<String, dynamic>.from(data));
-    });
-  }
-
-  // ===========================================================================
-  // INTERNAL HELPERS
-  // ===========================================================================
-
-  void _emit(String event, dynamic data) {
     if (_socket?.connected == true) {
       _socket!.emit(event, data);
+    } else {
+      // Queue if important, or discard if not
+      _offlineQueue.add(payload);
     }
   }
 
-  void _on(String event, Function(dynamic) callback) {
-
-    _socket?.off(event);
+  void on(String event, Function(dynamic) callback) {
     _socket?.on(event, callback);
   }
 
-  // ===========================================================================
-  // CLEANUP
-  // ===========================================================================
+  void off(String event) {
+    _socket?.off(event);
+  }
+
+  void _flushOfflineQueue() {
+    if (_offlineQueue.isEmpty) return;
+
+    print('📤 Flushing ${_offlineQueue.length} offline events');
+    for (final payload in _offlineQueue) {
+      _socket?.emit(payload['event'], payload['data']);
+    }
+    _offlineQueue.clear();
+  }
 
   void disconnect() {
     _socket?.disconnect();
     _socket?.dispose();
     _socket = null;
   }
+
+  bool get isConnected => _socket?.connected ?? false;
+
+  Stream<Map<String, dynamic>> get eventStream => _eventController.stream;
 }

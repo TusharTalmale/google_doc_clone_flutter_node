@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../feature/auth/auth_controller.dart';
+import '../../provider/auth_controller.dart';
 import '../../widgets/auth_widgets.dart';
 
 class RegisterScreen extends ConsumerWidget {

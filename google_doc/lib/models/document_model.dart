@@ -1,128 +1,151 @@
-import 'save_state_model.dart';
-import 'collaborator_model.dart';
-import 'document_stats_model.dart';
-import 'page_settings_model.dart';
-import 'versioning_model.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:google_doc/utils/json_converters.dart';
+import 'package:hive/hive.dart';
 
-class DocumentModel {
-  final String id;
-  final String title;
-  final String ownerId;
+part 'document_model.freezed.dart';
+part 'document_model.g.dart';
 
-  final List<dynamic> content;
-
-  final PageSettingsModel page;
-  final List<CollaboratorModel> collaborators;
-
-  final SaveState saveState;
-  final VersioningModel versioning;
-  final DocumentStatsModel stats;
-
-  final bool isDeleted;
-  final DateTime? deletedAt;
-
-  final DateTime createdAt;
-  final DateTime updatedAt;
-
-  DocumentModel({
-    required this.id,
-    required this.title,
-    required this.ownerId,
-    required this.content,
-    required this.page,
-    required this.collaborators,
-    required this.saveState,
-    required this.versioning,
-    required this.stats,
-    required this.isDeleted,
-    this.deletedAt,
-    required this.createdAt,
-    required this.updatedAt,
-  });
-
-  // -------------------------------
-  // FROM JSON
-  // -------------------------------
-  factory DocumentModel.fromJson(Map<String, dynamic> json) {
-    return DocumentModel(
-      id: json['_id'],
-      title: json['title'],
-      ownerId: json['ownerId'],
-
-      content: List<dynamic>.from(json['content'] ?? []),
-
-      page: PageSettingsModel.fromJson(json['page'] ?? {}),
-
-      collaborators: (json['collaborators'] as List? ?? [])
-          .map((e) => CollaboratorModel.fromJson(e))
-          .toList(),
-
-      saveState: SaveState.fromJson(json['saveState'] ?? {}),
-
-      versioning: VersioningModel.fromJson(json['versioning'] ?? {}),
-
-      stats: DocumentStatsModel.fromJson(json['stats'] ?? {}),
-
-      isDeleted: json['isDeleted'] ?? false,
-      deletedAt: json['deletedAt'] != null
-          ? DateTime.parse(json['deletedAt'])
-          : null,
-
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
-    );
-  }
-
-  // -------------------------------
-  // TO JSON
-  // -------------------------------
-  Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
-      'title': title,
-      'ownerId': ownerId,
-      'content': content,
-      'page': page.toJson(),
-      'collaborators': collaborators.map((e) => e.toJson()).toList(),
-      'saveState': saveState.toJson(),
-      'versioning': versioning.toJson(),
-      'stats': stats.toJson(),
-      'isDeleted': isDeleted,
-      'deletedAt': deletedAt?.toIso8601String(),
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-    };
-  }
-
-  // -------------------------------
-  // COPY WITH
-  // -------------------------------
-  DocumentModel copyWith({
-    String? title,
-    List<dynamic>? content,
-    PageSettingsModel? page,
-    List<CollaboratorModel>? collaborators,
+@freezed
+abstract class DocumentModel with _$DocumentModel {
+  const factory DocumentModel({
+    required String id,
+    required String title,
+    required String ownerId,
+    @Default([]) List<dynamic> content, // Quill Delta
+    required PageSettings page,
+    @Default([]) List<Collaborator> collaborators,
     SaveState? saveState,
-    VersioningModel? versioning,
-    DocumentStatsModel? stats,
-    bool? isDeleted,
-    DateTime? deletedAt,
-    DateTime? updatedAt,
-  }) {
-    return DocumentModel(
-      id: id,
-      title: title ?? this.title,
-      ownerId: ownerId,
-      content: content ?? this.content,
-      page: page ?? this.page,
-      collaborators: collaborators ?? this.collaborators,
-      saveState: saveState ?? this.saveState,
-      versioning: versioning ?? this.versioning,
-      stats: stats ?? this.stats,
-      isDeleted: isDeleted ?? this.isDeleted,
-      deletedAt: deletedAt ?? this.deletedAt,
-      createdAt: createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
+    Versioning? versioning,
+    DocumentStats? stats,
+    @Default(false) bool isDeleted,
+    @TimestampConverter() DateTime? deletedAt,
+    @TimestampConverter() DateTime? createdAt,
+    @TimestampConverter() DateTime? updatedAt,
+    @Default(false) bool isPublic,
+    @Default('view') String publicAccess,
+    String? shareableLink,
+    @Default(false) bool isFavorite,
+    @Default(0) int revision,
+  }) = _DocumentModel;
+
+  factory DocumentModel.fromJson(Map<String, dynamic> json) =>
+      _$DocumentModelFromJson(json);
+}
+
+@freezed
+abstract class Collaborator with _$Collaborator {
+  const factory Collaborator({
+    required String userId,
+    required String role, // owner, editor, viewer, commenter
+    String? color,
+    @TimestampConverter() DateTime? joinedAt,
+    @TimestampConverter() DateTime? lastActive,
+    int? currentSection,
+  }) = _Collaborator;
+
+  factory Collaborator.fromJson(Map<String, dynamic> json) =>
+      _$CollaboratorFromJson(json);
+}
+
+@freezed
+abstract class PageSettings with _$PageSettings {
+  const factory PageSettings({
+    @Default('A4') String size,
+    @Default('portrait') String orientation,
+    @Default(const Margins()) Margins margin,
+    @Default('#FFFFFF') String backgroundColor,
+  }) = _PageSettings;
+
+  factory PageSettings.fromJson(Map<String, dynamic> json) =>
+      _$PageSettingsFromJson(json);
+}
+
+@freezed
+abstract class Margins with _$Margins {
+  const factory Margins({
+    @Default(40) int top,
+    @Default(40) int bottom,
+    @Default(40) int left,
+    @Default(40) int right,
+  }) = _Margins;
+
+  factory Margins.fromJson(Map<String, dynamic> json) =>
+      _$MarginsFromJson(json);
+}
+
+@freezed
+abstract class SaveState with _$SaveState {
+  const factory SaveState({
+    @Default('saved') String status,
+    @TimestampConverter() DateTime? lastSavedAt,
+  }) = _SaveState;
+
+  factory SaveState.fromJson(Map<String, dynamic> json) =>
+      _$SaveStateFromJson(json);
+}
+
+@freezed
+abstract class Versioning with _$Versioning {
+  const factory Versioning({
+    @Default(1) int currentVersion,
+    @TimestampConverter() DateTime? lastSnapshotAt,
+  }) = _Versioning;
+
+  factory Versioning.fromJson(Map<String, dynamic> json) =>
+      _$VersioningFromJson(json);
+}
+
+@freezed
+abstract class DocumentStats with _$DocumentStats {
+  const factory DocumentStats({
+    @Default(0) int totalEdits,
+    @Default(0) int wordCount,
+    String? lastEditor,
+  }) = _DocumentStats;
+
+  factory DocumentStats.fromJson(Map<String, dynamic> json) =>
+      _$DocumentStatsFromJson(json);
+}
+
+// @freezed
+// class FavoriteInfo with _$FavoriteInfo {
+//   const factory FavoriteInfo({
+//     required String userId,
+//     DateTime? addedAt,
+//   }) = _FavoriteInfo;
+
+//   factory FavoriteInfo.fromJson(Map<String, dynamic> json) =>
+//       _$FavoriteInfoFromJson(json);
+// }
+
+// // For creating/updating
+// @freezed
+// class DocumentUpdate with _$DocumentUpdate {
+//   const DocumentUpdate._();
+//   const factory DocumentUpdate({
+//     String? title,
+//     List<dynamic>? content,
+//     PageSettings? page,
+//   }) = _DocumentUpdate;
+
+//   Map<String, dynamic> toJson() => {
+//         if (title != null) 'title': title,
+//         if (content != null) 'content': content,
+//         if (page != null) 'page': page!.toJson(),
+//       };
+// }
+
+class DocumentModelAdapter extends TypeAdapter<DocumentModel> {
+  @override
+  final int typeId = 0;
+
+  @override
+  DocumentModel read(BinaryReader reader) {
+    return DocumentModel.fromJson(Map<String, dynamic>.from(reader.readMap()));
+  }
+
+  @override
+  void write(BinaryWriter writer, DocumentModel obj) {
+    writer.writeMap(obj.toJson());
   }
 }

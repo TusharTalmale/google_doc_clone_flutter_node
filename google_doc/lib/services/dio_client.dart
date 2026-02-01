@@ -1,91 +1,72 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:google_doc/utils/constant/api_constant.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:google_doc/services/storage_service.dart';
 
-final dioProvider = Provider<Dio>((ref) {
-  final storageService = ref.read(storageServiceProvider);
+part 'dio_client.g.dart';
 
+@Riverpod(keepAlive: true)
+Dio dioClient(Ref ref) {
+  final storage = ref.read(storageServiceProvider);
+  
   final dio = Dio(
     BaseOptions(
       baseUrl: ApiConstants.baseUrl,
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
-      headers: {'Content-Type': 'application/json'},
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 15),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
     ),
   );
 
-  dio.interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
+  // Retry interceptor (auto-retry on network errors)
+  dio.interceptors.add(
+    RetryInterceptor(
+      dio: dio,
+      logPrint: print,
+      retries: 3,
+      retryDelays: const [
+        Duration(seconds: 1),
+        Duration(seconds: 2),
+        Duration(seconds: 3),
+      ],
+    ),
+  );
 
-  // Custom Interceptor to add Auth Token
+  // Auth Interceptor
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final token = await storageService.getToken();
+        final token = await storage.getToken();
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
         return handler.next(options);
       },
-    ),
-  );
-  
-  dio.interceptors.add(
-    LogInterceptor(
-      requestBody: true,
-      responseBody: true,
-      logPrint: (obj) {
-        // ignore: avoid_print
-        print(obj);
+      onError: (error, handler) async {
+        if (error.response?.statusCode == 401) {
+          // Token expired - handle refresh or logout
+          await storage.deleteToken();
+          // You could emit an event to AuthController here to force logout
+        }
+        return handler.next(error);
       },
-      error: true,
-      requestHeader: true,
-      responseHeader: true,
-      request: true,
-
     ),
   );
-  //  dio.interceptors.add(
-  //   InterceptorsWrapper(
-  //     onRequest: (options, handler) async {
-  //       final token = await storageService.getToken();
-  //       //storage.token; // 🔥 memory cached
 
-  //       if (token != null) {
-  //         options.headers["Authorization"] = "Bearer $token";
-  //       }
-
-  //       return handler.next(options);
-  //     },
-
-  //     onError: (error, handler) async {
-  //       if (error.response?.statusCode == 401) {
-  //         // 🔒 future refresh-token logic
-  //         // ref.read(authControllerProvider.notifier).logout();
-  //       }
-  //       return handler.next(error);
-  //     },
-  //   ),
-  // );
-      // dio.interceptors.add(_loggerInterceptor());
-
+  // Logging (only in debug)
+  if (const bool.fromEnvironment('dart.vm.product') == false) {
+    dio.interceptors.add(
+      LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+        logPrint: (obj) => print('[DIO] $obj'),
+      ),
+    );
+  }
 
   return dio;
-});
-
-//  InterceptorsWrapper _loggerInterceptor() {
-//     return InterceptorsWrapper(
-//       onRequest: (options, handler) {
-//         print("➡️ ${options.method} ${options.path}");
-//         return handler.next(options);
-//       },
-//       onResponse: (response, handler) {
-//         print("✅ ${response.statusCode} ${response.requestOptions.path}");
-//         return handler.next(response);
-//       },
-//       onError: (error, handler) {
-//         print("❌ ${error.message}");
-//         return handler.next(error);
-//       },
-//     );
-//   }
+}

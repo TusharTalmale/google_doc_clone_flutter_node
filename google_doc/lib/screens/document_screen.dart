@@ -68,7 +68,7 @@ class _DocumentScreenState extends ConsumerState<DocumentScreen> {
     _autoSaveTimer?.cancel();
     _autoSaveTimer = Timer(const Duration(seconds: 2), () {
       final content = _controller!.document.toDelta().toJson();
-      ref.read(socketServiceProvider).saveDocument(widget.documentId, content);
+      ref.read()(widget.documentId, content);
     });
   }
 
