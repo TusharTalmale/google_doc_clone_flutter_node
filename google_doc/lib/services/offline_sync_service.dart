@@ -152,17 +152,25 @@ class OfflineSyncService extends _$OfflineSyncService {
 
     final socket = ref.read(socketClientProvider.notifier);
     if (!socket.isConnected) {
-      final stream = ref.read(socketClientProvider.stream);
-      final connectionFuture = stream.firstWhere(
-        (state) => state == SocketConnectionState.connected,
+      final completer = Completer<void>();
+      final sub = ref.listen<AsyncValue<SocketConnectionState>>(
+        socketClientProvider,
+        (_, next) {
+          if (next.asData?.value == SocketConnectionState.connected &&
+              !completer.isCompleted) {
+            completer.complete();
+          }
+        },
       );
       socket.connect();
 
       try {
-        await connectionFuture.timeout(const Duration(seconds: 10));
+        await completer.future.timeout(const Duration(seconds: 10));
       } catch (_) {
+        sub.close();
         return;
       }
+      sub.close();
     }
 
     for (final op in pending) {

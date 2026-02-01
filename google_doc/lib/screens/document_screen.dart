@@ -259,16 +259,15 @@ class _MainToolbar extends StatelessWidget {
           const VerticalDivider(width: 20, indent: 8, endIndent: 8),
           Expanded(
             child: SizedBox(
-              height: 42 ,
+              height: 42,
               child: QuillSimpleToolbar(
                 controller: controller,
-config: QuillSimpleToolbarConfig(
-  showFontFamily: false,
-  showFontSize: false,
-  multiRowsDisplay: false,
-  showDividers: true,
-),
-                
+                config: QuillSimpleToolbarConfig(
+                  showFontFamily: false,
+                  showFontSize: false,
+                  multiRowsDisplay: false,
+                  showDividers: true,
+                ),
               ),
             ),
           ),
@@ -327,13 +326,11 @@ class _EditorSurface extends StatelessWidget {
                 controller: controller,
                 focusNode: focusNode,
                 scrollController: ScrollController(),
-          
-                config :QuillEditorConfig(
+
+                config: QuillEditorConfig(
                   placeholder: "Type @ to insert",
                   scrollable: false,
-
-                )
-                  
+                ),
               ),
               const Positioned(
                 left: 300,

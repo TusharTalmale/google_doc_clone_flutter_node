@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/widgets.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:google_doc/services/socket_client.dart';
 
@@ -20,5 +21,10 @@ bool isOnline(Ref ref) {
 
 @riverpod
 Stream<SocketConnectionState> socketConnectionState(Ref ref) {
-  return ref.watch(socketClientProvider.stream);
+  final socketState = ref.watch(socketClientProvider);
+
+  return socketState.maybeWhen(
+    data: (state) => Stream.value(state),
+    orElse: () => Stream.value(SocketConnectionState.disconnected),
+  );
 }
