@@ -4,7 +4,6 @@ import 'dart:math';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:google_doc/services/dio_client.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:google_doc/services/socket_client.dart';
 import 'package:google_doc/utils/constant/api_constant.dart';

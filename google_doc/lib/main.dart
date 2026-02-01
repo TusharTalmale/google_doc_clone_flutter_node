@@ -4,7 +4,6 @@ import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_doc/screens/auth/login_screen.dart';
 import 'package:google_doc/screens/auth/register_screen.dart';
-import 'package:google_doc/screens/auth/router.dart';
 import 'package:google_doc/screens/document_screen.dart';
 
 void main() async {

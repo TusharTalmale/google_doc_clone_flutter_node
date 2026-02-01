@@ -32,7 +32,7 @@ class LoginScreen extends ConsumerWidget {
     return Scaffold(
       body: auth.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => _buildForm(context, ref),
+        error: (_, _) => _buildForm(context, ref),
         data: (_) => _buildForm(context, ref),
       ),
     );

@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:convert';
+import 'package:flutter/rendering.dart';
 import 'package:google_doc/utils/constant/api_constant.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -74,23 +74,23 @@ class SocketClient extends _$SocketClient {
 
   void _setupListeners() {
     _socket!.onConnect((_) {
-      print('✅ Socket connected: ${_socket!.id}');
+      debugPrint('✅ Socket connected: ${_socket!.id}');
       _connectionController.add(SocketConnectionState.connected);
       _flushOfflineQueue();
     });
 
     _socket!.onDisconnect((_) {
-      print('❌ Socket disconnected');
+      debugPrint('❌ Socket disconnected');
       _connectionController.add(SocketConnectionState.disconnected);
     });
 
     _socket!.onReconnectAttempt((attempt) {
-      print('🔄 Reconnect attempt: $attempt');
+      debugPrint('🔄 Reconnect attempt: $attempt');
       _connectionController.add(SocketConnectionState.reconnecting);
     });
 
     _socket!.onConnectError((error) {
-      print('⚠️ Socket error: $error');
+      debugPrint('⚠️ Socket error: $error');
       _connectionController.add(SocketConnectionState.error);
     });
 
@@ -126,7 +126,7 @@ class SocketClient extends _$SocketClient {
   void _flushOfflineQueue() {
     if (_offlineQueue.isEmpty) return;
 
-    print('📤 Flushing ${_offlineQueue.length} offline events');
+    debugPrint('📤 Flushing ${_offlineQueue.length} offline events');
     for (final payload in _offlineQueue) {
       _socket?.emit(payload['event'], payload['data']);
     }

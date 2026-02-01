@@ -52,7 +52,7 @@ abstract class PageSettings with _$PageSettings {
   const factory PageSettings({
     @Default('A4') String size,
     @Default('portrait') String orientation,
-    @Default(const Margins()) Margins margin,
+    @Default( Margins()) Margins margin,
     @Default('#FFFFFF') String backgroundColor,
   }) = _PageSettings;
 
