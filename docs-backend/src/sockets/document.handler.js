@@ -1,9 +1,9 @@
-import { getYDoc } from '../../yjs.store.js';
+import { getYDoc } from '../utils/yjs.store.js';
 import * as Y from 'yjs';
-import * as presenceStore from '../presence.store.js';
-import * as activityService from '../../service/activity.service.js';
-import Document from '../../model/Document.js';
-import { hasEditAccess } from '../../utils/permission.util.js';
+import * as presenceStore from './presence.store.js';
+import * as activityService from '../service/activity.service.js';
+import Document from '../model/Document.js';
+import { hasEditAccess } from '../utils/permission.middleware.js';
 
 export const handleDocumentJoin = (socket, io) => async (documentId) => {
   try {

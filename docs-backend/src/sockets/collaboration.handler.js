@@ -1,6 +1,5 @@
-import * as presenceStore from '../presence.store.js';
+import * as presenceStore from './presence.store.js';
 import Document from '../model/Document.js';
-import { hasEditAccess } from '../../utils/permission.util.js';
 // Missing Permission Checks in Socket Handlers
 // File: collaboration.handler.js
 // handleTypingStart, handleCursorMove, handleSelectionChange don't verify if user has view access to the document.

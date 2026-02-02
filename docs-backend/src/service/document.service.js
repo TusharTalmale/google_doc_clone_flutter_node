@@ -1,8 +1,8 @@
 import Document from "../model/Document.js";
 import User from "../model/User.js";
 import * as activityService from "./activity.service.js";
-import { hasEditAccess, hasViewAccess } from "../utils/permission.util.js";
-const { deleteYDoc } = require('../yjs.store.js');
+import { hasEditAccess, hasViewAccess } from "../utils/permission.middleware.js";
+import { deleteYDoc } from "../utils/yjs.store.js";
 
 // create doc 
 export const createDocument = async (userId) => { 
