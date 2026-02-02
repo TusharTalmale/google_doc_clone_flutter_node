@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:google_doc/utils/constant/api_constant.dart';
+import 'package:google_doc/utils/api_constant.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:google_doc/services/socket_client.dart';
 import 'package:google_doc/models/presence_model.dart';

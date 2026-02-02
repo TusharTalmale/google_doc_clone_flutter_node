@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_doc/provider/auth_controller.dart';
 import 'package:google_doc/screens/screens.dart';
-import 'package:google_doc/utils/router/route_constants.dart';
-import 'package:google_doc/widgets/layout/app_shell.dart';
+import 'package:google_doc/utils/route_constants.dart';
+import 'package:google_doc/widgets/app_shell.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();

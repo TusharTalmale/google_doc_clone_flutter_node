@@ -12,6 +12,7 @@ part 'auth_controller.g.dart';
 class AuthController extends _$AuthController {
   final GoogleSignIn _googleSignIn = GoogleSignIn(
     clientId: kIsWeb ? 'YOUR_WEB_CLIENT_ID' : null,
+    serverClientId: kIsWeb ? null : 'YOUR_SERVER_CLIENT_ID',
     scopes: ['email', 'profile'],
   );
 

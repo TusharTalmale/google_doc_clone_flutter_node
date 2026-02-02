@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_doc/models/document_model.dart';
 import 'package:google_doc/provider/document_list_controller.dart';
-import 'package:google_doc/widgets/common/animations.dart';
+import 'package:google_doc/widgets/animations.dart';
 import 'package:shimmer/shimmer.dart';
 
 class HomeScreen extends ConsumerWidget {

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/rendering.dart';
-import 'package:google_doc/utils/constant/api_constant.dart';
+import 'package:google_doc/utils/api_constant.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:google_doc/services/storage_service.dart';

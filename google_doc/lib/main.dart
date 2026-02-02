@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_doc/models/document_model.dart';
 import 'package:google_doc/services/offline_sync_service.dart';
 import 'package:google_doc/utils/app_theme.dart';
-import 'package:google_doc/utils/router/app_router.dart';
+import 'package:google_doc/utils/app_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {

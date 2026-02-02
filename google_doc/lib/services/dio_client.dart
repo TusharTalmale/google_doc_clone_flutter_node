@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:flutter/widgets.dart';
-import 'package:google_doc/utils/constant/api_constant.dart';
+import 'package:google_doc/utils/api_constant.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:google_doc/services/storage_service.dart';
 
