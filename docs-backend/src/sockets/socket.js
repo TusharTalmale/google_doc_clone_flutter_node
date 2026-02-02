@@ -11,20 +11,25 @@ let io;
 export const initializeSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: "*",
+      origin: "*",  // Or specify your Flutter web URL: "http://localhost:7357"
       methods: ["GET", "POST"],
+      credentials: true,
+      allowedHeaders: ["Authorization", "Content-Type"]  // <-- ADD THIS
     },
+    // Remove transports from here - let client decide
+    allowEIO3: true,  // <-- ADD THIS for compatibility
   });
+  
 
   // Middleware
   io.use(socketAuth);
-
+ 
   // Handle Emitter events (for HTTP routes to trigger socket events)
-  const ALLOWED_EVENTS = ['receive-changes', 'new-comment', 'presence-update'];
+  const ALLOWED_EVENTS = ['receive-changes', 'new-comment', 'presence-update', 'document-list-update'];
   socketEmitter.on("broadcast", ({ documentId, event, data }) => {
     if (io && ALLOWED_EVENTS.includes(event)) {
       io.to(documentId).emit(event, data);
-    }
+    } 
   });
 
   socketEmitter.on("permission-revoked", ({ documentId, userId }) => {
@@ -43,7 +48,9 @@ export const initializeSocket = (server) => {
   });
 
   io.on("connection", (socket) => {
-    console.log("Socket connected:", socket.id, "User:", socket.user.name);
+    const userId = socket.user._id.toString();
+    socket.join(userId); // Join personal room for list updates
+    console.log("Socket connected:", socket.id, "User:", socket.user.name, "Room:", userId);
 
     // Health check
     socket.on("health-ping", () => {
@@ -69,7 +76,7 @@ export const initializeSocket = (server) => {
     socket.on("send-changes", async ({ documentId, delta }) => {
       const doc = await Document.findById(documentId);
       if (!doc) return;
-      socket.to(documentId).emit("receive-changes", delta);
+      socket.to(documentId).emit("receive-changes", { documentId, delta });
     });
 
     // Disconnect

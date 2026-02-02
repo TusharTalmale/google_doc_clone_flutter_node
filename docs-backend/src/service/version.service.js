@@ -1,5 +1,6 @@
 import DocumentVersion from "../model/DocumentVersion.js";
 import * as documentService from "../service/document.service.js";
+import Document from "../model/Document.js";
 
 export const createVersion = async (documentId, content, userId, reason = "manual") => {
   // const doc = await Document.findById(documentId);
@@ -18,14 +19,15 @@ export const createVersion = async (documentId, content, userId, reason = "manua
   // doc.versioning.lastSnapshotAt = new Date();
 
   // await doc.save();
-await Document.findByIdAndUpdate(documentId, {
-  $inc: { "versioning.currentVersion": 1 },
-  $set: { "versioning.lastSnapshotAt": new Date() }
-});
+  const updatedDoc = await Document.findByIdAndUpdate(documentId, {
+    $inc: { "versioning.currentVersion": 1 },
+    $set: { "versioning.lastSnapshotAt": new Date() }
+  }, { new: true });
+
   // Create snapshot
   const version = await DocumentVersion.create({
     documentId,
-    versionNumber: doc.versioning.currentVersion,
+    versionNumber: updatedDoc.versioning.currentVersion,
     snapshot: content,
     createdBy: userId,
     reason

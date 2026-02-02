@@ -41,6 +41,11 @@ const transformDocument = (doc, userId = null) => {
 export const createDocument = async (req, res) => {
   try {
     const doc = await documentService.createDocument(req.user.id);
+    socketEmitter.emit("broadcast", {
+      documentId: req.user.id,
+      event: "document-list-update",
+      data: {}
+    });
     sendResponse(res, 201, transformDocument(doc, req.user.id), "Document created successfully");
   } catch (error) {
     handleError(res, error);
@@ -71,6 +76,11 @@ export const updateTitle = async (req, res) => {
     const { title } = req.body;
     if (!title) throw new Error("Title is required");
     const doc = await documentService.updateDocumentTitle(req.params.id, req.user.id, title);
+    socketEmitter.emit("broadcast", {
+      documentId: req.user.id,
+      event: "document-list-update",
+      data: {}
+    });
     sendResponse(res, 200, doc, "Title updated");
   } catch (error) {
     handleError(res, error);
@@ -81,6 +91,11 @@ export const saveDocument = async (req, res) => {
   try {
     const { content } = req.body;
     await versionService.createVersion(req.params.id, content, req.user.id);
+    socketEmitter.emit("broadcast", {
+      documentId: req.user.id,
+      event: "document-list-update",
+      data: {}
+    });
     sendResponse(res, 200, null, "Document saved successfully");
   } catch (error) {
     handleError(res, error);
@@ -139,6 +154,11 @@ export const removeCollaborator = async (req, res) => {
 export const deleteDocument = async (req, res) => {
   try {
     await documentService.moveToTrash(req.params.id, req.user.id);
+    socketEmitter.emit("broadcast", {
+      documentId: req.user.id,
+      event: "document-list-update",
+      data: {}
+    });
     sendResponse(res, 200, null, "Moved to trash");
   } catch (error) {
     handleError(res, error);

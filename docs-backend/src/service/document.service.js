@@ -63,26 +63,26 @@ export const updateDocumentTitle = async (documentId, userId, title) => {
 }
 
 export const updateDocumentContent = async (documentId, content, userId) => {
-  const doc = await Document.findById(documentId);
-  if (!doc) throw new Error("Document not found");
-
-  doc.content = content;
-  doc.saveState = {
-    status: "saved",
-    lastSavedAt: new Date(),
-  };
-  doc.updatedAt = new Date();
-
-  // Update basic analytics
-  if (!doc.stats) doc.stats = { totalEdits: 0, wordCount: 0 };
-  doc.stats.totalEdits += 1;
-  doc.stats.lastEditor = userId;
-  
   // Basic word count logic
   const text = Array.isArray(content) ? content.map(op => typeof op.insert === 'string' ? op.insert : "").join("") : "";
-  doc.stats.wordCount = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+  const wordCount = text.trim().split(/\s+/).filter(w => w.length > 0).length;
 
-  return await doc.save();
+  const doc = await Document.findByIdAndUpdate(documentId, {
+    content,
+    saveState: {
+      status: "saved",
+      lastSavedAt: new Date(),
+    },
+    updatedAt: new Date(),
+    $inc: { "stats.totalEdits": 1 },
+    $set: {
+      "stats.lastEditor": userId,
+      "stats.wordCount": wordCount
+    }
+  }, { new: true });
+
+  if (!doc) throw new Error("Document not found");
+  return doc;
 };
 
 
