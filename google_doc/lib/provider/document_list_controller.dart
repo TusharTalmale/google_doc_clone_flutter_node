@@ -1,6 +1,9 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:google_doc/models/document_model.dart';
+import 'package:google_doc/models/socket_events.dart';
 import 'package:google_doc/repositories/document_repository.dart';
+import 'package:google_doc/services/socket_client.dart';
+import 'package:google_doc/repositories/socket_repository.dart';
 
 part 'document_list_controller.g.dart';
 
@@ -8,7 +11,23 @@ part 'document_list_controller.g.dart';
 class DocumentListController extends _$DocumentListController {
   @override
   Future<List<DocumentModel>> build() async {
+    _initSocket();
     return _fetchDocuments();
+  }
+
+  void _initSocket() {
+    // Ensure socket is connected
+    final client = ref.read(socketClientProvider.notifier);
+    if (!client.isConnected) {
+      client.connect();
+    }
+
+    // Listen for global updates
+    ref.read(socketRepositoryProvider).eventStream.listen((event) {
+      event.mapOrNull(
+        documentListUpdate: (_) => refresh(),
+      );
+    });
   }
 
   Future<List<DocumentModel>> _fetchDocuments() async {

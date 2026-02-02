@@ -58,13 +58,17 @@ class SocketClient extends _$SocketClient {
     _socket = io.io(
       ApiConstants.baseUrl,
       io.OptionBuilder()
-          .setTransports(['websocket', 'polling'])
+          .setTransports([
+            'polling',
+            'websocket',
+          ]) // <-- PUT POLLING FIRST for web
           .disableAutoConnect()
           .enableReconnection()
           .setReconnectionDelay(1000)
           .setReconnectionDelayMax(5000)
           .setRandomizationFactor(0.5)
           .setAuth({'token': token})
+          .setExtraHeaders({'Authorization': 'Bearer $token'}) // <-- ADD THIS
           .build(),
     );
 

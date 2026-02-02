@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_portal/flutter_portal.dart';
@@ -33,6 +34,9 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   late QuillController _quillController;
   final FocusNode _focusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
+  Timer? _saveTimer;
+  StreamSubscription? _socketChangeSub;
+  StreamSubscription? _quillChangeSub;
   
   @override
   void initState() {
@@ -40,6 +44,20 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     _quillController = QuillController.basic();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadDocument();
+    });
+  }
+
+  void _setupSocketListener() {
+    _socketChangeSub?.cancel();
+    _socketChangeSub = ref.read(collaborationControllerProvider(widget.documentId).notifier)
+        .deltaStream.listen((delta) {
+      if (mounted) {
+        _quillController.compose(
+          Delta.fromJson(delta),
+          _quillController.selection,
+          ChangeSource.remote,
+        );
+      }
     });
   }
 
@@ -55,16 +73,38 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         print('Error loading document: $e');
       }
     }
-    _quillController.addListener(_onDocumentChanged);
+    
+    _setupSocketListener();
+    
+    _quillChangeSub?.cancel();
+    _quillChangeSub = _quillController.changes.listen((change) {
+      if (change.source == ChangeSource.local) {
+        // 1. Send real-time update over socket
+        ref.read(collaborationControllerProvider(widget.documentId).notifier)
+            .sendDelta(change.change.toJson());
+        
+        // 2. Schedule auto-save to database
+        _autoSave();
+      }
+    });
   }
 
-  void _onDocumentChanged() {
-    // Debounce save handled by Yjs
+  void _autoSave() {
+    _saveTimer?.cancel();
+    _saveTimer = Timer(const Duration(seconds: 2), () {
+      if (mounted) {
+        final content = _quillController.document.toDelta().toJson();
+        ref.read(documentControllerProvider(widget.documentId).notifier)
+            .saveContent(content);
+      }
+    });
   }
 
   @override
   void dispose() {
-    _quillController.removeListener(_onDocumentChanged);
+    _saveTimer?.cancel();
+    _socketChangeSub?.cancel();
+    _quillChangeSub?.cancel();
     _quillController.dispose();
     _focusNode.dispose();
     _scrollController.dispose();
@@ -275,6 +315,79 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                     // Actions
                     Row(
                       children: [
+                        // Save Button
+                        if (docAsync.asData != null)
+                          Container(
+                            margin: const EdgeInsets.only(left: AppSizes.spaceXs),
+                            decoration: BoxDecoration(
+                              color: isDark 
+                                  ? AppColors.darkSurfaceVariant.withOpacity(0.5)
+                                  : AppColors.lightSurfaceVariant,
+                              borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                isSaving ? Icons.sync_rounded : Icons.save_outlined,
+                                color: isSaving ? AppColors.primary : null,
+                                size: 20,
+                              ),
+                              onPressed: isSaving ? null : () {
+                                final content = _quillController.document.toDelta().toJson();
+                                ref.read(documentControllerProvider(widget.documentId).notifier)
+                                    .saveContent(content);
+                              },
+                              tooltip: 'Save changes',
+                            ),
+                          ),
+
+                        // Edit Menu
+                        PopupMenuButton<String>(
+                          icon: const Icon(Icons.edit_note_rounded),
+                          tooltip: 'Edit options',
+                          onSelected: (value) {
+                            if (value == 'undo') {
+                              _quillController.undo();
+                            } else if (value == 'redo') {
+                              _quillController.redo();
+                            } else if (value == 'clear') {
+                              _quillController.clear();
+                            } 
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'undo',
+                              child: ListTile(
+                                leading: Icon(Icons.undo_rounded),
+                                title: Text('Undo'),
+                                trailing: Text('Ctrl+Z'),
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'redo',
+                              child: ListTile(
+                                leading: Icon(Icons.redo_rounded),
+                                title: Text('Redo'),
+                                trailing: Text('Ctrl+Y'),
+                              ),
+                            ),
+                            const PopupMenuDivider(),
+                            const PopupMenuItem(
+                              value: 'thumbnail',
+                              child: ListTile(
+                                leading: Icon(Icons.image_rounded),
+                                title: Text('Update Thumbnail'),
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'clear',
+                              child: ListTile(
+                                leading: Icon(Icons.clear_all_rounded, color: Colors.red),
+                                title: Text('Clear All', style: TextStyle(color: Colors.red)),
+                              ),
+                            ),
+                          ],
+                        ),
+
                         // Comments Toggle (Mobile)
                         if (MediaQuery.of(context).size.width <= AppSizes.desktopBreakpoint)
                           IconButton(
@@ -348,7 +461,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   Widget _buildGlassToolbar(bool isDark) {
     return ClipRect(
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           padding: const EdgeInsets.symmetric(
             horizontal: AppSizes.spaceMd,
@@ -356,25 +469,46 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
           ),
           decoration: BoxDecoration(
             color: isDark 
-                ? AppColors.glassDark.withOpacity(0.5)
-                : AppColors.glassLight.withOpacity(0.5),
+                ? AppColors.glassDark.withOpacity(0.7)
+                : AppColors.glassLight.withOpacity(0.7),
             border: Border(
               bottom: BorderSide(
                 color: isDark 
                     ? AppColors.glassBorderDark 
                     : AppColors.glassBorderLight,
+                width: 0.5,
               ),
             ),
           ),
-          child: QuillSimpleToolbar(
-            controller: _quillController,
-            config: const QuillSimpleToolbarConfig(
-              showAlignmentButtons: true,
-              showBackgroundColorButton: true,
-              showColorButton: true,
-              showCodeBlock: true,
-              showListCheck: true,
-              showQuote: true,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: QuillSimpleToolbar(
+              controller: _quillController,
+              config: QuillSimpleToolbarConfig(
+                showAlignmentButtons: true,
+                showBackgroundColorButton: true,
+                showColorButton: true,
+                showCodeBlock: true,
+                showListCheck: true,
+                showQuote: true,
+                showIndent: true,
+                showLink: true,
+                showSearchButton: true,
+                showSubscript: true,
+                showSuperscript: true,
+                headerStyleType: HeaderStyleType.original,
+                buttonOptions: QuillSimpleToolbarButtonOptions(
+                  base: QuillToolbarBaseButtonOptions(
+                    iconTheme: QuillIconTheme(
+                      iconButtonSelectedData: IconButtonData(
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppColors.primary.withOpacity(0.2),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ),

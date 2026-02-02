@@ -35,7 +35,7 @@ final class DocumentListControllerProvider
 }
 
 String _$documentListControllerHash() =>
-    r'5d37399c6e7ad435f9ccb5113eb2d99c750aa78f';
+    r'bb56b54a5616e081672ce191109752a63a9ed258';
 
 abstract class _$DocumentListController
     extends $AsyncNotifier<List<DocumentModel>> {

@@ -64,6 +64,14 @@ class DocumentController extends _$DocumentController {
     }
     
     try {
+      // Set saving state
+      state = AsyncValue.data(current.copyWith(
+        saveState: SaveState(
+          status: 'saving',
+          lastSavedAt: current.saveState?.lastSavedAt,
+        ),
+      ));
+
       await ref.read(documentRepositoryProvider).saveDocument(current.id, content);
       
       state = AsyncValue.data(current.copyWith(

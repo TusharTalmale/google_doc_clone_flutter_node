@@ -69,6 +69,19 @@ class SocketRepository {
       _eventController.add(SocketEvent.newComment(comment: data as Map<String, dynamic>));
     });
 
+    _client.on('receive-changes', (data) {
+      if (data is Map<String, dynamic>) {
+        _eventController.add(SocketEvent.receiveChanges(
+          documentId: data['documentId'] as String,
+          delta: data['delta'] as List<dynamic>,
+        ));
+      }
+    });
+
+    _client.on('document-list-update', (_) {
+      _eventController.add(const SocketEvent.documentListUpdate());
+    });
+
     _client.on('error', (data) {
       if (data is Map) {
         _eventController.add(SocketEvent.error(message: data['message'] as String? ?? 'Unknown error'));
@@ -115,6 +128,13 @@ class SocketRepository {
 
   void typingStop(String documentId) {
     _client.emit(SocketEvents.typingStop, documentId);
+  }
+
+  void sendChanges(String documentId, List<dynamic> delta) {
+    _client.emit('send-changes', {
+      'documentId': documentId,
+      'delta': delta,
+    });
   }
 
   void disconnect() {

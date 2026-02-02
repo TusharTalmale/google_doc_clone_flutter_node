@@ -51,7 +51,7 @@ final class DocumentControllerProvider
 }
 
 String _$documentControllerHash() =>
-    r'78373f83965224309d845f0c102fde6a01371ece';
+    r'a17a2f2350da5101aa9b3da771323e0c08836317';
 
 final class DocumentControllerFamily extends $Family
     with

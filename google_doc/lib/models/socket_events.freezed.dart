@@ -55,7 +55,7 @@ extension SocketEventPatterns on SocketEvent {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( DocumentStateEvent value)?  documentState,TResult Function( YjsUpdateEvent value)?  yjsUpdate,TResult Function( PresenceUpdateEvent value)?  presenceUpdate,TResult Function( CursorUpdateEvent value)?  cursorUpdate,TResult Function( SelectionUpdateEvent value)?  selectionUpdate,TResult Function( SaveStatusEvent value)?  saveStatus,TResult Function( ErrorEvent value)?  error,TResult Function( NewCommentEvent value)?  newComment,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( DocumentStateEvent value)?  documentState,TResult Function( YjsUpdateEvent value)?  yjsUpdate,TResult Function( PresenceUpdateEvent value)?  presenceUpdate,TResult Function( CursorUpdateEvent value)?  cursorUpdate,TResult Function( SelectionUpdateEvent value)?  selectionUpdate,TResult Function( SaveStatusEvent value)?  saveStatus,TResult Function( ErrorEvent value)?  error,TResult Function( NewCommentEvent value)?  newComment,TResult Function( ReceiveChangesEvent value)?  receiveChanges,TResult Function( DocumentListUpdateEvent value)?  documentListUpdate,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case DocumentStateEvent() when documentState != null:
@@ -66,7 +66,9 @@ return cursorUpdate(_that);case SelectionUpdateEvent() when selectionUpdate != n
 return selectionUpdate(_that);case SaveStatusEvent() when saveStatus != null:
 return saveStatus(_that);case ErrorEvent() when error != null:
 return error(_that);case NewCommentEvent() when newComment != null:
-return newComment(_that);case _:
+return newComment(_that);case ReceiveChangesEvent() when receiveChanges != null:
+return receiveChanges(_that);case DocumentListUpdateEvent() when documentListUpdate != null:
+return documentListUpdate(_that);case _:
   return orElse();
 
 }
@@ -84,7 +86,7 @@ return newComment(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( DocumentStateEvent value)  documentState,required TResult Function( YjsUpdateEvent value)  yjsUpdate,required TResult Function( PresenceUpdateEvent value)  presenceUpdate,required TResult Function( CursorUpdateEvent value)  cursorUpdate,required TResult Function( SelectionUpdateEvent value)  selectionUpdate,required TResult Function( SaveStatusEvent value)  saveStatus,required TResult Function( ErrorEvent value)  error,required TResult Function( NewCommentEvent value)  newComment,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( DocumentStateEvent value)  documentState,required TResult Function( YjsUpdateEvent value)  yjsUpdate,required TResult Function( PresenceUpdateEvent value)  presenceUpdate,required TResult Function( CursorUpdateEvent value)  cursorUpdate,required TResult Function( SelectionUpdateEvent value)  selectionUpdate,required TResult Function( SaveStatusEvent value)  saveStatus,required TResult Function( ErrorEvent value)  error,required TResult Function( NewCommentEvent value)  newComment,required TResult Function( ReceiveChangesEvent value)  receiveChanges,required TResult Function( DocumentListUpdateEvent value)  documentListUpdate,}){
 final _that = this;
 switch (_that) {
 case DocumentStateEvent():
@@ -95,7 +97,9 @@ return cursorUpdate(_that);case SelectionUpdateEvent():
 return selectionUpdate(_that);case SaveStatusEvent():
 return saveStatus(_that);case ErrorEvent():
 return error(_that);case NewCommentEvent():
-return newComment(_that);case _:
+return newComment(_that);case ReceiveChangesEvent():
+return receiveChanges(_that);case DocumentListUpdateEvent():
+return documentListUpdate(_that);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -112,7 +116,7 @@ return newComment(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( DocumentStateEvent value)?  documentState,TResult? Function( YjsUpdateEvent value)?  yjsUpdate,TResult? Function( PresenceUpdateEvent value)?  presenceUpdate,TResult? Function( CursorUpdateEvent value)?  cursorUpdate,TResult? Function( SelectionUpdateEvent value)?  selectionUpdate,TResult? Function( SaveStatusEvent value)?  saveStatus,TResult? Function( ErrorEvent value)?  error,TResult? Function( NewCommentEvent value)?  newComment,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( DocumentStateEvent value)?  documentState,TResult? Function( YjsUpdateEvent value)?  yjsUpdate,TResult? Function( PresenceUpdateEvent value)?  presenceUpdate,TResult? Function( CursorUpdateEvent value)?  cursorUpdate,TResult? Function( SelectionUpdateEvent value)?  selectionUpdate,TResult? Function( SaveStatusEvent value)?  saveStatus,TResult? Function( ErrorEvent value)?  error,TResult? Function( NewCommentEvent value)?  newComment,TResult? Function( ReceiveChangesEvent value)?  receiveChanges,TResult? Function( DocumentListUpdateEvent value)?  documentListUpdate,}){
 final _that = this;
 switch (_that) {
 case DocumentStateEvent() when documentState != null:
@@ -123,7 +127,9 @@ return cursorUpdate(_that);case SelectionUpdateEvent() when selectionUpdate != n
 return selectionUpdate(_that);case SaveStatusEvent() when saveStatus != null:
 return saveStatus(_that);case ErrorEvent() when error != null:
 return error(_that);case NewCommentEvent() when newComment != null:
-return newComment(_that);case _:
+return newComment(_that);case ReceiveChangesEvent() when receiveChanges != null:
+return receiveChanges(_that);case DocumentListUpdateEvent() when documentListUpdate != null:
+return documentListUpdate(_that);case _:
   return null;
 
 }
@@ -140,7 +146,7 @@ return newComment(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String base64State)?  documentState,TResult Function( String update)?  yjsUpdate,TResult Function( List<Presence> users)?  presenceUpdate,TResult Function( String userId,  Cursor cursor)?  cursorUpdate,TResult Function( String userId,  String name,  String color,  Selection range)?  selectionUpdate,TResult Function( String status,  DateTime? lastSavedAt)?  saveStatus,TResult Function( String message)?  error,TResult Function( Map<String, dynamic> comment)?  newComment,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function( String base64State)?  documentState,TResult Function( String update)?  yjsUpdate,TResult Function( List<Presence> users)?  presenceUpdate,TResult Function( String userId,  Cursor cursor)?  cursorUpdate,TResult Function( String userId,  String name,  String color,  Selection range)?  selectionUpdate,TResult Function( String status,  DateTime? lastSavedAt)?  saveStatus,TResult Function( String message)?  error,TResult Function( Map<String, dynamic> comment)?  newComment,TResult Function( String documentId,  List<dynamic> delta)?  receiveChanges,TResult Function()?  documentListUpdate,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case DocumentStateEvent() when documentState != null:
 return documentState(_that.base64State);case YjsUpdateEvent() when yjsUpdate != null:
@@ -150,7 +156,9 @@ return cursorUpdate(_that.userId,_that.cursor);case SelectionUpdateEvent() when 
 return selectionUpdate(_that.userId,_that.name,_that.color,_that.range);case SaveStatusEvent() when saveStatus != null:
 return saveStatus(_that.status,_that.lastSavedAt);case ErrorEvent() when error != null:
 return error(_that.message);case NewCommentEvent() when newComment != null:
-return newComment(_that.comment);case _:
+return newComment(_that.comment);case ReceiveChangesEvent() when receiveChanges != null:
+return receiveChanges(_that.documentId,_that.delta);case DocumentListUpdateEvent() when documentListUpdate != null:
+return documentListUpdate();case _:
   return orElse();
 
 }
@@ -168,7 +176,7 @@ return newComment(_that.comment);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String base64State)  documentState,required TResult Function( String update)  yjsUpdate,required TResult Function( List<Presence> users)  presenceUpdate,required TResult Function( String userId,  Cursor cursor)  cursorUpdate,required TResult Function( String userId,  String name,  String color,  Selection range)  selectionUpdate,required TResult Function( String status,  DateTime? lastSavedAt)  saveStatus,required TResult Function( String message)  error,required TResult Function( Map<String, dynamic> comment)  newComment,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function( String base64State)  documentState,required TResult Function( String update)  yjsUpdate,required TResult Function( List<Presence> users)  presenceUpdate,required TResult Function( String userId,  Cursor cursor)  cursorUpdate,required TResult Function( String userId,  String name,  String color,  Selection range)  selectionUpdate,required TResult Function( String status,  DateTime? lastSavedAt)  saveStatus,required TResult Function( String message)  error,required TResult Function( Map<String, dynamic> comment)  newComment,required TResult Function( String documentId,  List<dynamic> delta)  receiveChanges,required TResult Function()  documentListUpdate,}) {final _that = this;
 switch (_that) {
 case DocumentStateEvent():
 return documentState(_that.base64State);case YjsUpdateEvent():
@@ -178,7 +186,9 @@ return cursorUpdate(_that.userId,_that.cursor);case SelectionUpdateEvent():
 return selectionUpdate(_that.userId,_that.name,_that.color,_that.range);case SaveStatusEvent():
 return saveStatus(_that.status,_that.lastSavedAt);case ErrorEvent():
 return error(_that.message);case NewCommentEvent():
-return newComment(_that.comment);case _:
+return newComment(_that.comment);case ReceiveChangesEvent():
+return receiveChanges(_that.documentId,_that.delta);case DocumentListUpdateEvent():
+return documentListUpdate();case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,7 +205,7 @@ return newComment(_that.comment);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String base64State)?  documentState,TResult? Function( String update)?  yjsUpdate,TResult? Function( List<Presence> users)?  presenceUpdate,TResult? Function( String userId,  Cursor cursor)?  cursorUpdate,TResult? Function( String userId,  String name,  String color,  Selection range)?  selectionUpdate,TResult? Function( String status,  DateTime? lastSavedAt)?  saveStatus,TResult? Function( String message)?  error,TResult? Function( Map<String, dynamic> comment)?  newComment,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function( String base64State)?  documentState,TResult? Function( String update)?  yjsUpdate,TResult? Function( List<Presence> users)?  presenceUpdate,TResult? Function( String userId,  Cursor cursor)?  cursorUpdate,TResult? Function( String userId,  String name,  String color,  Selection range)?  selectionUpdate,TResult? Function( String status,  DateTime? lastSavedAt)?  saveStatus,TResult? Function( String message)?  error,TResult? Function( Map<String, dynamic> comment)?  newComment,TResult? Function( String documentId,  List<dynamic> delta)?  receiveChanges,TResult? Function()?  documentListUpdate,}) {final _that = this;
 switch (_that) {
 case DocumentStateEvent() when documentState != null:
 return documentState(_that.base64State);case YjsUpdateEvent() when yjsUpdate != null:
@@ -205,7 +215,9 @@ return cursorUpdate(_that.userId,_that.cursor);case SelectionUpdateEvent() when 
 return selectionUpdate(_that.userId,_that.name,_that.color,_that.range);case SaveStatusEvent() when saveStatus != null:
 return saveStatus(_that.status,_that.lastSavedAt);case ErrorEvent() when error != null:
 return error(_that.message);case NewCommentEvent() when newComment != null:
-return newComment(_that.comment);case _:
+return newComment(_that.comment);case ReceiveChangesEvent() when receiveChanges != null:
+return receiveChanges(_that.documentId,_that.delta);case DocumentListUpdateEvent() when documentListUpdate != null:
+return documentListUpdate();case _:
   return null;
 
 }
@@ -780,5 +792,111 @@ as Map<String, dynamic>,
 
 
 }
+
+/// @nodoc
+
+
+class ReceiveChangesEvent implements SocketEvent {
+  const ReceiveChangesEvent({required this.documentId, required final  List<dynamic> delta}): _delta = delta;
+  
+
+ final  String documentId;
+ final  List<dynamic> _delta;
+ List<dynamic> get delta {
+  if (_delta is EqualUnmodifiableListView) return _delta;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_delta);
+}
+
+
+/// Create a copy of SocketEvent
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ReceiveChangesEventCopyWith<ReceiveChangesEvent> get copyWith => _$ReceiveChangesEventCopyWithImpl<ReceiveChangesEvent>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ReceiveChangesEvent&&(identical(other.documentId, documentId) || other.documentId == documentId)&&const DeepCollectionEquality().equals(other._delta, _delta));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,documentId,const DeepCollectionEquality().hash(_delta));
+
+@override
+String toString() {
+  return 'SocketEvent.receiveChanges(documentId: $documentId, delta: $delta)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $ReceiveChangesEventCopyWith<$Res> implements $SocketEventCopyWith<$Res> {
+  factory $ReceiveChangesEventCopyWith(ReceiveChangesEvent value, $Res Function(ReceiveChangesEvent) _then) = _$ReceiveChangesEventCopyWithImpl;
+@useResult
+$Res call({
+ String documentId, List<dynamic> delta
+});
+
+
+
+
+}
+/// @nodoc
+class _$ReceiveChangesEventCopyWithImpl<$Res>
+    implements $ReceiveChangesEventCopyWith<$Res> {
+  _$ReceiveChangesEventCopyWithImpl(this._self, this._then);
+
+  final ReceiveChangesEvent _self;
+  final $Res Function(ReceiveChangesEvent) _then;
+
+/// Create a copy of SocketEvent
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? documentId = null,Object? delta = null,}) {
+  return _then(ReceiveChangesEvent(
+documentId: null == documentId ? _self.documentId : documentId // ignore: cast_nullable_to_non_nullable
+as String,delta: null == delta ? _self._delta : delta // ignore: cast_nullable_to_non_nullable
+as List<dynamic>,
+  ));
+}
+
+
+}
+
+/// @nodoc
+
+
+class DocumentListUpdateEvent implements SocketEvent {
+  const DocumentListUpdateEvent();
+  
+
+
+
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DocumentListUpdateEvent);
+}
+
+
+@override
+int get hashCode => runtimeType.hashCode;
+
+@override
+String toString() {
+  return 'SocketEvent.documentListUpdate()';
+}
+
+
+}
+
+
+
 
 // dart format on

@@ -42,4 +42,11 @@ class SocketEvent with _$SocketEvent {
   const factory SocketEvent.newComment({
     required Map<String, dynamic> comment,
   }) = NewCommentEvent;
+
+  const factory SocketEvent.receiveChanges({
+    required String documentId,
+    required List<dynamic> delta,
+  }) = ReceiveChangesEvent;
+
+  const factory SocketEvent.documentListUpdate() = DocumentListUpdateEvent;
 }

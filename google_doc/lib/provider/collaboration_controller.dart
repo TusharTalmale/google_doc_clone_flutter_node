@@ -82,8 +82,27 @@ class CollaborationController extends _$CollaborationController {
         newComment: (comment) {
           // Handle new comment - could refresh comments list
         },
+        receiveChanges: (docId, delta) {
+          if (docId == documentId) {
+            handleReceivedDelta(delta);
+          }
+        },
+        documentListUpdate: () {
+          // Not relevant for collaboration controller which is per document
+        },
       );
     });
+  }
+
+  final _deltaController = StreamController<List<dynamic>>.broadcast();
+  Stream<List<dynamic>> get deltaStream => _deltaController.stream;
+
+  void handleReceivedDelta(List<dynamic> delta) {
+    _deltaController.add(delta);
+  }
+
+  Future<void> sendDelta(List<dynamic> delta) async {
+    ref.read(socketRepositoryProvider).sendChanges(documentId, delta);
   }
 
   void _updateUserCursor(String userId, Cursor cursor) {

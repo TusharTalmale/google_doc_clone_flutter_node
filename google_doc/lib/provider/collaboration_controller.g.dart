@@ -60,7 +60,7 @@ final class CollaborationControllerProvider
 }
 
 String _$collaborationControllerHash() =>
-    r'1bdbd5e3be1acec06be4d156a4a0e48c30b285e7';
+    r'8e23b51d86431c1e793af83fa16a2b9799af41fe';
 
 final class CollaborationControllerFamily extends $Family
     with
