@@ -34,7 +34,6 @@ class CollaborationController extends _$CollaborationController {
     _init();
     ref.onDispose(() {
       _sub?.cancel();
-      ref.read(socketRepositoryProvider).disconnect();
     });
     return const CollaborationState();
   }

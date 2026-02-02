@@ -1,17 +1,17 @@
 import { Server } from "socket.io";
-import { socketAuth } from "./socketAuth.js";
-import { getIO, socketEmitter } from "./emitter.js";
+import { socketEmitter } from "./emitter.js";
 import * as presenceStore from "./presence.store.js";
-import * as documentHandler from "./handlers/document.handler.js";
-import * as collaborationHandler from "./handlers/collaboration.handler.js";
+import * as documentHandler from "./document.handler.js";
+import * as collaborationHandler from "./collaboration.handler.js";
 import Document from "../model/Document.js";
+import { socketAuth } from "../utils/socketAuth.js";
 
 let io;
 
 export const initializeSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: process.env.CLIENT_URL || "*",
+      origin: "*",
       methods: ["GET", "POST"],
     },
   });

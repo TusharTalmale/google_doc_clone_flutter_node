@@ -25,10 +25,23 @@ const handleError = (res, error) => {
   });
 };
 
+const transformDocument = (doc, userId = null) => {
+  const d = doc.toObject ? doc.toObject() : doc;
+  const isFav = userId && Array.isArray(d.isFavorite) 
+      ? d.isFavorite.some(f => f.userId.toString() === userId.toString()) 
+      : false;
+      
+  return {
+    ...d,
+    id: d._id,
+    isFavorite: isFav
+  };
+};
+
 export const createDocument = async (req, res) => {
   try {
     const doc = await documentService.createDocument(req.user.id);
-    sendResponse(res, 201, doc, "Document created successfully");
+    sendResponse(res, 201, transformDocument(doc, req.user.id), "Document created successfully");
   } catch (error) {
     handleError(res, error);
   }
@@ -37,7 +50,8 @@ export const createDocument = async (req, res) => {
 export const getAllDocuments = async (req, res) => {
   try {
     const docs = await documentService.getAllDocuments(req.user.id);
-    sendResponse(res, 200, docs);
+    const transformedDocs = docs.map(doc => transformDocument(doc, req.user.id));
+    sendResponse(res, 200, transformedDocs);
   } catch (error) {
     handleError(res, error);
   }
@@ -46,7 +60,7 @@ export const getAllDocuments = async (req, res) => {
 export const getDocumentById = async (req, res) => {
   try {
     const doc = await documentService.getDocumentById(req.params.id, req.user.id);
-    sendResponse(res, 200, doc);
+    sendResponse(res, 200, transformDocument(doc, req.user.id));
   } catch (error) {
     handleError(res, error);
   }
@@ -203,7 +217,7 @@ export const getDocumentByShareLink = async (req, res) => {
     }
     
     sendResponse(res, 200, {
-      document: doc,
+      document: transformDocument(doc, req.user ? req.user.id : null),
       accessLevel: doc.publicAccess // 'view', 'comment', or 'edit'
     });
   } catch (error) {
@@ -213,7 +227,8 @@ export const getDocumentByShareLink = async (req, res) => {
 export const getTrash = async (req, res) => {
   try {
     const docs = await documentService.getTrashDocuments(req.user.id);
-    sendResponse(res, 200, docs);
+    const transformedDocs = docs.map(doc => transformDocument(doc, req.user.id));
+    sendResponse(res, 200, transformedDocs);
   } catch (error) {
     handleError(res, error);
   }

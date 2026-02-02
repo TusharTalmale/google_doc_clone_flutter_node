@@ -89,7 +89,7 @@ final class IsOnlineProvider extends $FunctionalProvider<bool, bool, bool>
   }
 }
 
-String _$isOnlineHash() => r'44dde44243cc0b754e313956e547c1f82a5d8728';
+String _$isOnlineHash() => r'40ba756aa6146efc028ecabe3474b576c4a37959';
 
 @ProviderFor(socketConnectionState)
 const socketConnectionStateProvider = SocketConnectionStateProvider._();
@@ -131,4 +131,4 @@ final class SocketConnectionStateProvider
 }
 
 String _$socketConnectionStateHash() =>
-    r'a55779debead58089b53fb6cbc91468714fb9999';
+    r'edad3d305862ef164188b53badf51d809af4e35b';

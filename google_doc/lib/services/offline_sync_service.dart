@@ -6,7 +6,7 @@ import 'package:google_doc/services/dio_client.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:google_doc/services/socket_client.dart';
-import 'package:google_doc/utils/constant/api_constant.dart';
+import 'package:google_doc/utils/api_constant.dart';
 import 'package:google_doc/provider/connection_state_provider.dart';
 
 part 'offline_sync_service.g.dart';

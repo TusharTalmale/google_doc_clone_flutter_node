@@ -113,7 +113,7 @@
 // }
 
 import 'package:dio/dio.dart';
-import 'package:google_doc/utils/constant/api_constant.dart';
+import 'package:google_doc/utils/api_constant.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:google_doc/models/document_model.dart';
 import 'package:google_doc/models/api_response.dart';

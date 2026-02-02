@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:google_doc/utils/constant/api_constant.dart';
+import 'package:google_doc/utils/api_constant.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:google_doc/models/user_model.dart';
 import 'package:google_doc/models/api_response.dart';
@@ -24,15 +24,17 @@ class AuthRepository {
         data: {'email': email, 'password': password},
       );
       
-      final apiRes = ApiResponse<Map<String, dynamic>>.fromJson(
-        res.data,
-        (json) => json as Map<String, dynamic>,
-      );
+      // Backend returns { token, user } directly
+      final data = res.data as Map<String, dynamic>;
       
-      if (!apiRes.success) throw Exception(apiRes.message);
+      final token = data['token'] as String;
+      final userData = data['user'] as Map<String, dynamic>;
       
-      final user = UserModel.fromJson(apiRes.data!);
-      return user;
+      // Merge token into user data for UserModel
+      final userMap = Map<String, dynamic>.from(userData);
+      userMap['token'] = token;
+      
+      return UserModel.fromJson(userMap);
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -45,14 +47,15 @@ class AuthRepository {
         data: {'name': name, 'email': email, 'password': password},
       );
       
-      final apiRes = ApiResponse<Map<String, dynamic>>.fromJson(
-        res.data,
-        (json) => json as Map<String, dynamic>,
-      );
+      // Backend returns { token, user } directly
+      final data = res.data as Map<String, dynamic>;
+      final token = data['token'] as String;
+      final userData = data['user'] as Map<String, dynamic>;
       
-      if (!apiRes.success) throw Exception(apiRes.message);
+      final userMap = Map<String, dynamic>.from(userData);
+      userMap['token'] = token;
       
-      return UserModel.fromJson(apiRes.data!);
+      return UserModel.fromJson(userMap);
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -65,14 +68,15 @@ class AuthRepository {
         data: {'idToken': idToken},
       );
       
-      final apiRes = ApiResponse<Map<String, dynamic>>.fromJson(
-        res.data,
-        (json) => json as Map<String, dynamic>,
-      );
+      // Backend returns { token, user } directly
+      final data = res.data as Map<String, dynamic>;
+      final token = data['token'] as String;
+      final userData = data['user'] as Map<String, dynamic>;
       
-      if (!apiRes.success) throw Exception(apiRes.message);
+      final userMap = Map<String, dynamic>.from(userData);
+      userMap['token'] = token;
       
-      return UserModel.fromJson(apiRes.data!);
+      return UserModel.fromJson(userMap);
     } on DioException catch (e) {
       throw _handleError(e);
     }
@@ -81,6 +85,7 @@ class AuthRepository {
   Future<UserModel> getProfile() async {
     try {
       final res = await _dio.get(ApiConstants.profile);
+      // Backend returns user object directly
       return UserModel.fromJson(res.data);
     } on DioException catch (e) {
       throw _handleError(e);
@@ -88,6 +93,9 @@ class AuthRepository {
   }
 
   Exception _handleError(DioException e) {
+    if (e.response?.statusCode == 401) {
+      return Exception('Unauthorized');
+    }
     final message = e.response?.data?['message'] ?? 'Network error';
     return Exception(message);
   }

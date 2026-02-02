@@ -1,5 +1,4 @@
 import Document from "../model/Document.js";
-import { hasEditAccess } from "../utils/permission.util.js"; // Import the utility
 
 export const canEdit = async (req, res, next) => {
   try {

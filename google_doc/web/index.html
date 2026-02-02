@@ -21,8 +21,17 @@
   <meta name="description" content="A new Flutter project.">
 
   <!-- FedCM and Security Configuration -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://www.gstatic.com blob:; style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com; connect-src 'self' https://accounts.google.com https://*.googleapis.com https://www.gstatic.com https://fonts.gstatic.com; frame-src 'self' https://accounts.google.com; img-src 'self' https: data:; font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; media-src 'self' https://www.gstatic.com; object-src 'none'; base-uri 'self';" />
-
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self'; 
+    script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com https://www.gstatic.com blob:; 
+    style-src 'self' 'unsafe-inline' https://accounts.google.com https://fonts.googleapis.com; 
+    connect-src 'self' http://localhost:3001 http://127.0.0.1:3001 https://accounts.google.com https://*.googleapis.com https://www.gstatic.com https://fonts.gstatic.com; 
+    frame-src 'self' https://accounts.google.com; 
+    img-src 'self' https: data:; 
+    font-src 'self' data: https://fonts.gstatic.com https://fonts.googleapis.com; 
+    media-src 'self' https://www.gstatic.com; 
+    object-src 'none'; 
+  base-uri 'self';">
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -31,7 +40,6 @@
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
-
   <!-- Google Sign-In Configuration for Web -->
   <meta name="google-signin-client_id" content="272866144375-kl18u30kuknm4t89b6l35p5g6u8l1lfr.apps.googleusercontent.com">
 <script src="https://accounts.google.com/gsi/client" async defer></script>

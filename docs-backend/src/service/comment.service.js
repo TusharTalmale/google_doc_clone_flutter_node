@@ -1,7 +1,7 @@
 import Comment from "../model/Comment.js";
 import Document from "../model/Document.js";
 import User from "../model/User.js";
-import { hasViewAccess } from "../utils/permission.util.js";
+import { hasViewAccess } from "../utils/permission.middleware.js";
 
 const escapeHtml = (text) => {
   return text
