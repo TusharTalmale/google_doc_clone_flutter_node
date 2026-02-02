@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_portal/flutter_portal.dart';
 import 'package:flutter_quill/flutter_quill.dart';
@@ -9,9 +10,11 @@ import 'package:google_doc/provider/collaboration_controller.dart';
 import 'package:google_doc/provider/document_controller.dart';
 import 'package:google_doc/screens/editor/widgets/cursor_widget.dart';
 import 'package:google_doc/screens/editor/widgets/share_dialog.dart';
+import 'package:google_doc/utils/app_colors.dart';
 import 'package:google_doc/utils/app_theme.dart';
 
 import '../../models/presence_model.dart';
+
 class EditorScreen extends ConsumerStatefulWidget {
   final String documentId;
   final bool isPublic;
@@ -30,6 +33,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   late QuillController _quillController;
   final FocusNode _focusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
+  
   @override
   void initState() {
     super.initState();
@@ -55,8 +59,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   }
 
   void _onDocumentChanged() {
-    // Debounce save
-    // This will be handled by Yjs in real implementation
+    // Debounce save handled by Yjs
   }
 
   @override
@@ -74,72 +77,74 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     final collabState = ref.watch(
       collaborationControllerProvider(widget.documentId),
     );
-      return Portal(
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth > AppSizes.desktopBreakpoint;
+    
+    return Portal(
       child: Scaffold(
-        appBar: _buildAppBar(docAsync),
-        body: Row(
-          children: [
-            // Main Editor
-            Expanded(
-              child: Column(
-                children: [
-                  // Toolbar
-                  QuillSimpleToolbar(
-                    controller: _quillController,
-                    config : const QuillSimpleToolbarConfig(
-                      showAlignmentButtons: true,
-                      showBackgroundColorButton: true,
-                      showColorButton: true,
-                      showCodeBlock: true,
-                      showListCheck: true,
-                      showQuote: true,
-                    ),
-                  ),
-                  
-                  // Editor
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        // Page
-                        Center(
-                          child: Container(
-                            width: AppSizes.editorMaxWidth,
-                            margin: const EdgeInsets.all(24),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(4),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: ClipRect(
-                              child: QuillEditor(
-                                controller: _quillController,
-                                focusNode: _focusNode,
-                                scrollController: _scrollController,
-                                config : QuillEditorConfig(
-                                  padding: const EdgeInsets.all(48),
-                                  showCursor: true,
-                                  embedBuilders: [],
-                                  customStyles: DefaultStyles(
-                                    paragraph: DefaultTextBlockStyle(
-                                      const TextStyle(fontSize: 14, height: 1.5),
-                                      HorizontalSpacing(0, 0),
-                                      VerticalSpacing(0, 0),
-                                      VerticalSpacing(0, 0),
-                                      null,
-                                    
-                                    ).copyWith(
-                                      decoration: BoxDecoration(
-                                        border: Border(
-                                          bottom: BorderSide(
-                                            color: Colors.grey.shade200,
-                                          ),
+        appBar: _buildGlassAppBar(docAsync, isDark),
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: isDark 
+                ? AppColors.backgroundGradientDark 
+                : AppColors.backgroundGradientLight,
+          ),
+          child: Row(
+            children: [
+              // Main Editor
+              Expanded(
+                child: Column(
+                  children: [
+                    // Glass Toolbar
+                    _buildGlassToolbar(isDark),
+                    
+                    // Editor
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          // Paper
+                          Center(
+                            child: Container(
+                              width: AppSizes.editorMaxWidth,
+                              margin: const EdgeInsets.all(AppSizes.spaceLg),
+                              decoration: BoxDecoration(
+                                color: isDark 
+                                    ? AppColors.darkSurface 
+                                    : Colors.white,
+                                borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+                                    blurRadius: 20,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                                child: QuillEditor(
+                                  controller: _quillController,
+                                  focusNode: _focusNode,
+                                  scrollController: _scrollController,
+                                  config: QuillEditorConfig(
+                                    padding: const EdgeInsets.all(48),
+                                    showCursor: true,
+                                    embedBuilders: [],
+                                    customStyles: DefaultStyles(
+                                      paragraph: DefaultTextBlockStyle(
+                                        TextStyle(
+                                          fontSize: 14, 
+                                          height: 1.6,
+                                          color: isDark 
+                                              ? AppColors.darkTextPrimary 
+                                              : AppColors.lightTextPrimary,
                                         ),
+                                        HorizontalSpacing(0, 0),
+                                        VerticalSpacing(0, 0),
+                                        VerticalSpacing(0, 0),
+                                        null,
                                       ),
                                     ),
                                   ),
@@ -147,35 +152,27 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                               ),
                             ),
                           ),
-                        ),
-                        
-                        // Remote Cursors Overlay
-                        ...collabState.presences.map((presence) {
-                          if (presence.cursor == null) return const SizedBox();
-                          return RemoteCursorWidget(
-                            presence: presence,
-                            controller: _quillController,
-                          );
-                        }),
-                      ],
+                          
+                          // Remote Cursors Overlay
+                          ...collabState.presences.map((presence) {
+                            if (presence.cursor == null) return const SizedBox();
+                            return RemoteCursorWidget(
+                              presence: presence,
+                              controller: _quillController,
+                            );
+                          }),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-            
-            // Right Sidebar (Comments & Activity)
-            if (MediaQuery.of(context).size.width > 1200)
-              Container(
-                width: 300,
-                decoration: BoxDecoration(
-                  border: Border(
-                    left: BorderSide(color: Colors.grey.shade200),
-                  ),
+                  ],
                 ),
-                child: _buildRightSidebar(),
               ),
-          ],
+              
+              // Right Sidebar (Comments & Activity)
+              if (isDesktop)
+                _buildGlassRightSidebar(isDark),
+            ],
+          ),
         ),
         
         // Floating collaborator avatars
@@ -186,127 +183,327 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     );
   }
   
-
-  PreferredSizeWidget _buildAppBar(AsyncValue<DocumentModel> docAsync) {
+  PreferredSizeWidget _buildGlassAppBar(AsyncValue<DocumentModel> docAsync, bool isDark) {
     final isSaving = docAsync.asData?.value.saveState?.status == 'saving';
 
-    return AppBar(
-      title: Row(
-        children: [
-          // Back button
-          IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.pop(),
-          ),
-
-          // Title
-          Expanded(
-            child: docAsync.when(
-              data: (doc) => InkWell(
-                onTap: () => _showRenameDialog(context, doc),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(kToolbarHeight + 16),
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark 
+                  ? AppColors.glassDark 
+                  : AppColors.glassLight,
+              border: Border(
+                bottom: BorderSide(
+                  color: isDark 
+                      ? AppColors.glassBorderDark 
+                      : AppColors.glassBorderLight,
+                ),
+              ),
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.spaceMd,
+                  vertical: AppSizes.spaceXs,
+                ),
+                child: Row(
                   children: [
-                    Text(
-                      doc.title,
-                      style: const TextStyle(fontSize: 18),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      isSaving ? 'Saving...' : 'All changes saved',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
+                    // Back button
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDark 
+                            ? AppColors.darkSurfaceVariant.withOpacity(0.5)
+                            : AppColors.lightSurfaceVariant,
+                        borderRadius: BorderRadius.circular(AppSizes.radiusSm),
                       ),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back_rounded),
+                        onPressed: () => context.pop(),
+                      ),
+                    ),
+                    const SizedBox(width: AppSizes.spaceSm),
+
+                    // Title
+                    Expanded(
+                      child: docAsync.when(
+                        data: (doc) => GestureDetector(
+                          onTap: () => _showRenameDialog(context, doc),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                doc.title,
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: isSaving 
+                                          ? AppColors.warning 
+                                          : AppColors.success,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSizes.spaceXxs),
+                                  Text(
+                                    isSaving ? 'Saving...' : 'All changes saved',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        loading: () => const Text('Loading...'),
+                        error: (_, __) => const Text('Error'),
+                      ),
+                    ),
+
+                    // Actions
+                    Row(
+                      children: [
+                        // Comments Toggle (Mobile)
+                        if (MediaQuery.of(context).size.width <= AppSizes.desktopBreakpoint)
+                          IconButton(
+                            icon: const Icon(Icons.comment_outlined),
+                            onPressed: () => _showCommentsBottomSheet(context),
+                          ),
+
+                        // Share Button
+                        Container(
+                          margin: const EdgeInsets.only(left: AppSizes.spaceXs),
+                          decoration: AppDecorations.gradientButton(borderRadius: AppSizes.radiusSm),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => _showShareDialog(context),
+                              borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSizes.spaceMd,
+                                  vertical: AppSizes.spaceXs,
+                                ),
+                                child: Row(
+                                  children: const [
+                                    Icon(Icons.share_rounded, color: Colors.white, size: 18),
+                                    SizedBox(width: AppSizes.spaceXxs),
+                                    Text(
+                                      'Share',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Profile
+                        Container(
+                          margin: const EdgeInsets.only(left: AppSizes.spaceSm),
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            gradient: AppColors.accentGradient,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'U',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              loading: () => const Text('Loading...'),
-              error: (_, __) => const Text('Error'),
             ),
           ),
-        ],
+        ),
       ),
-      actions: [
-        // Comments Toggle (Mobile)
-        if (MediaQuery.of(context).size.width <= 1200)
-          IconButton(
-            icon: const Icon(Icons.comment),
-            onPressed: () => _showCommentsBottomSheet(context),
+    );
+  }
+  
+  Widget _buildGlassToolbar(bool isDark) {
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.spaceMd,
+            vertical: AppSizes.spaceXs,
           ),
-
-        // Share Button
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: FilledButton.icon(
-            onPressed: () => _showShareDialog(context),
-            icon: const Icon(Icons.lock_open, size: 18),
-            label: const Text('Share'),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+          decoration: BoxDecoration(
+            color: isDark 
+                ? AppColors.glassDark.withOpacity(0.5)
+                : AppColors.glassLight.withOpacity(0.5),
+            border: Border(
+              bottom: BorderSide(
+                color: isDark 
+                    ? AppColors.glassBorderDark 
+                    : AppColors.glassBorderLight,
+              ),
+            ),
+          ),
+          child: QuillSimpleToolbar(
+            controller: _quillController,
+            config: const QuillSimpleToolbarConfig(
+              showAlignmentButtons: true,
+              showBackgroundColorButton: true,
+              showColorButton: true,
+              showCodeBlock: true,
+              showListCheck: true,
+              showQuote: true,
             ),
           ),
         ),
-
-        // Profile
-        IconButton(
-          icon: const CircleAvatar(radius: 14, child: Text('U')),
-          onPressed: () {},
-        ),
-        const SizedBox(width: 16),
-      ],
+      ),
     );
   }
 
-  Widget _buildRightSidebar() {
-    return DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          const TabBar(
-            tabs: [
-              Tab(text: 'Comments'),
-              Tab(text: 'Activity'),
-            ],
+  Widget _buildGlassRightSidebar(bool isDark) {
+    return Container(
+      width: 320,
+      decoration: BoxDecoration(
+        color: isDark 
+            ? AppColors.glassDark 
+            : AppColors.glassLight,
+        border: Border(
+          left: BorderSide(
+            color: isDark 
+                ? AppColors.glassBorderDark 
+                : AppColors.glassBorderLight,
           ),
-          Expanded(
-            child: TabBarView(
-              children: [_buildCommentsTab(), _buildActivityTab()],
+        ),
+      ),
+      child: DefaultTabController(
+        length: 2,
+        child: Column(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: isDark 
+                        ? AppColors.darkDivider 
+                        : AppColors.lightDivider,
+                  ),
+                ),
+              ),
+              child: TabBar(
+                tabs: [
+                  Tab(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.comment_outlined, size: 18),
+                        SizedBox(width: AppSizes.spaceXxs),
+                        Text('Comments'),
+                      ],
+                    ),
+                  ),
+                  Tab(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.history_rounded, size: 18),
+                        SizedBox(width: AppSizes.spaceXxs),
+                        Text('Activity'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _buildCommentsTab(),
+                  _buildActivityTab(),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildCommentsTab() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 0, // TODO: Load comments
+      padding: const EdgeInsets.all(AppSizes.spaceMd),
+      itemCount: 0,
       itemBuilder: (context, index) {
-        return Card(
+        return Container(
+          margin: const EdgeInsets.only(bottom: AppSizes.spaceSm),
+          decoration: BoxDecoration(
+            color: isDark 
+                ? AppColors.darkSurfaceVariant.withOpacity(0.5)
+                : AppColors.lightSurfaceVariant.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+          ),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSizes.spaceSm),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const CircleAvatar(radius: 16, child: Text('A')),
-                    const SizedBox(width: 8),
-                    const Expanded(
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: Text(
+                          'A',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSizes.spaceXs),
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'User Name',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           Text(
                             '2 hours ago',
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                            style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ],
                       ),
@@ -317,7 +514,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSizes.spaceXs),
                 const Text('This is a comment on the document.'),
               ],
             ),
@@ -329,40 +526,100 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
 
   Widget _buildActivityTab() {
     return Center(
-      child: Text(
-        'Activity feed coming soon',
-        style: TextStyle(color: Colors.grey.shade600),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.history_rounded,
+              size: 32,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppSizes.spaceMd),
+          Text(
+            'Activity feed coming soon',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
- Widget _buildCollaboratorAvatars(List<Presence> presences) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 24, bottom: 24),
+  
+  Widget _buildCollaboratorAvatars(List<Presence> presences) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.spaceSm,
+        vertical: AppSizes.spaceXs,
+      ),
+      decoration: BoxDecoration(
+        color: AppColors.glassDark,
+        borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+        border: Border.all(color: AppColors.glassBorderDark),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           ...presences.take(3).map((p) => 
             Container(
-              margin: const EdgeInsets.only(left: 4),
-              child: CircleAvatar(
-                radius: 20,
-                backgroundColor: Color(int.parse(p.color.replaceFirst('#', '0xff'))),
-                child: Text(
-                  p.name.substring(0, 1),
-                  style: const TextStyle(color: Colors.white),
+              margin: const EdgeInsets.only(right: -8),
+              child: Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: Color(int.parse(p.color.replaceFirst('#', '0xff'))),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: Center(
+                  child: Text(
+                    p.name.substring(0, 1),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
           if (presences.length > 3)
             Container(
-              margin: const EdgeInsets.only(left: 4),
-              child: CircleAvatar(
-                radius: 20,
-                backgroundColor: Colors.grey.shade200,
-                child: Text('+${presences.length - 3}'),
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: AppColors.darkSurfaceVariant,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 2),
+              ),
+              child: Center(
+                child: Text(
+                  '+${presences.length - 3}',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ),
+          const SizedBox(width: AppSizes.spaceXs),
+          Text(
+            '${presences.length} online',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -370,28 +627,66 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   
   void _showRenameDialog(BuildContext context, DocumentModel doc) {
     final controller = TextEditingController(text: doc.title);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Rename'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusXl),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AppSizes.spaceXs),
+              decoration: BoxDecoration(
+                gradient: AppColors.primaryGradient,
+                borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+              ),
+              child: const Icon(Icons.edit_rounded, color: Colors.white, size: 20),
+            ),
+            const SizedBox(width: AppSizes.spaceSm),
+            const Text('Rename document'),
+          ],
+        ),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(hintText: 'Document title'),
+          decoration: const InputDecoration(
+            hintText: 'Document title',
+          ),
           autofocus: true,
         ),
         actions: [
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          FilledButton(
-            onPressed: () {
-              ref.read(documentControllerProvider(widget.documentId).notifier)
-                  .updateTitle(controller.text);
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
+          Container(
+            decoration: AppDecorations.gradientButton(borderRadius: AppSizes.radiusSm),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  ref.read(documentControllerProvider(widget.documentId).notifier)
+                      .updateTitle(controller.text);
+                  Navigator.pop(context);
+                },
+                borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSizes.spaceMd,
+                    vertical: AppSizes.spaceXs,
+                  ),
+                  child: Text(
+                    'Save',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -406,13 +701,53 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
   }
   
   void _showCommentsBottomSheet(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.5,
-        expand: false,
-        builder: (_, controller) => _buildCommentsTab(),
+      backgroundColor: Colors.transparent,
+      builder: (context) => ClipRRect(
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppSizes.radiusXl),
+        ),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark 
+                  ? AppColors.glassDark 
+                  : AppColors.glassLight,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppSizes.radiusXl),
+              ),
+            ),
+            child: DraggableScrollableSheet(
+              initialChildSize: 0.5,
+              expand: false,
+              builder: (_, controller) => Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.symmetric(vertical: AppSizes.spaceSm),
+                    decoration: BoxDecoration(
+                      color: isDark ? AppColors.darkDivider : AppColors.lightDivider,
+                      borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+                    ),
+                  ),
+                  Text(
+                    'Comments',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Expanded(child: _buildCommentsTab()),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

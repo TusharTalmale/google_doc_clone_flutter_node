@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_doc/models/document_model.dart';
 import 'package:google_doc/services/offline_sync_service.dart';
 import 'package:google_doc/utils/app_theme.dart';
+import 'package:google_doc/utils/app_colors.dart';
 import 'package:google_doc/utils/app_router.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:device_preview/device_preview.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +20,14 @@ void main() async {
   Hive.registerAdapter(PendingOperationAdapter());
   Hive.registerAdapter(DocumentModelAdapter()); // For caching
 
-  runApp(const ProviderScope(child: GoogleDocsApp()));
+  runApp(
+    ProviderScope(
+      child: DevicePreview(
+        enabled: true,
+        builder: (context) => const GoogleDocsApp(),
+      ),
+    ),
+  );
 }
 
 class GoogleDocsApp extends ConsumerWidget {
@@ -32,11 +41,15 @@ class GoogleDocsApp extends ConsumerWidget {
     ref.watch(offlineSyncServiceProvider);
 
     return MaterialApp.router(
+      // Device Preview Configuration
+      locale: DevicePreview.locale(context),
+      builder: DevicePreview.appBuilder,
+      
       title: 'Google Docs Clone',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light, // Corrected from ThemeMode.lightTheme
       routerConfig: router,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -45,15 +58,6 @@ class GoogleDocsApp extends ConsumerWidget {
         FlutterQuillLocalizations.delegate,
       ],
       supportedLocales: FlutterQuillLocalizations.supportedLocales,
-      builder: (context, child) {
-        return MediaQuery(
-          // Ensure text scaling doesn't break layout
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: const TextScaler.linear(1.0)),
-          child: child!,
-        );
-      },
     );
   }
 }
