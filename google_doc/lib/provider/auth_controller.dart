@@ -11,8 +11,8 @@ part 'auth_controller.g.dart';
 @Riverpod(keepAlive: true)
 class AuthController extends _$AuthController {
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    clientId: kIsWeb ? 'YOUR_WEB_CLIENT_ID' : null,
-    serverClientId: kIsWeb ? null : 'YOUR_SERVER_CLIENT_ID',
+    clientId: kIsWeb ? '272866144375-kl18u30kuknm4t89b6l35p5g6u8l1lfr.apps.googleusercontent.com' : null,
+    serverClientId: kIsWeb ? null : '272866144375-4mq14te71em7irprcviff6bgvr4avg79.apps.googleusercontent.com',
     scopes: ['email', 'profile'],
   );
 

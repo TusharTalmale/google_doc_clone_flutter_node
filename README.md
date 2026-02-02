@@ -1,3 +1,0 @@
-﻿# google_doc_clone_flutter_node
-
-You can clone help me 
