@@ -34,7 +34,7 @@ final class OfflineSyncServiceProvider
 }
 
 String _$offlineSyncServiceHash() =>
-    r'cabf53e78ad3c0ddad612f96b6d681d6ad6b243c';
+    r'b3b437cd691d431d61f907f7a0c7b632d62460a5';
 
 abstract class _$OfflineSyncService extends $AsyncNotifier<void> {
   FutureOr<void> build();

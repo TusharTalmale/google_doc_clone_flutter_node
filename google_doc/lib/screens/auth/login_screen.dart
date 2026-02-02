@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_doc/utils/route_constants.dart';
 import '../../widgets/auth_widgets.dart';
 import 'package:google_doc/provider/auth_controller.dart';
 
@@ -67,7 +69,7 @@ class LoginScreen extends ConsumerWidget {
         const SizedBox(height: 16),
         AuthFooter(
           text: "Don't have an account? Register",
-          onPressed: () => Navigator.pushNamed(context, '/register'),
+          onPressed: () => context.pushReplacementNamed(AppRoutes.register),
         ),
       ],
     );

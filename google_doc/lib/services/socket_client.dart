@@ -58,7 +58,7 @@ class SocketClient extends _$SocketClient {
     _socket = io.io(
       ApiConstants.baseUrl,
       io.OptionBuilder()
-          .setTransports(['websocket'])
+          .setTransports(['websocket', 'polling'])
           .disableAutoConnect()
           .enableReconnection()
           .setReconnectionDelay(1000)

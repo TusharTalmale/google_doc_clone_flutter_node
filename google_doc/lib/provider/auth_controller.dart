@@ -26,8 +26,18 @@ class AuthController extends _$AuthController {
       final user = await ref.read(authRepositoryProvider).getProfile();
       return user;
     } catch (e) {
-      // Token invalid, clear storage
-      await ref.read(storageServiceProvider).deleteToken();
+      if (e.toString().contains('Unauthorized')) {
+        await ref.read(storageServiceProvider).deleteToken();
+        return null;
+      }
+      
+      final userJson = await ref.read(storageServiceProvider).getUser();
+      if (userJson != null) {
+        try {
+          return UserModel.fromJson(jsonDecode(userJson));
+        } catch (_) {}
+      }
+      
       return null;
     }
   }

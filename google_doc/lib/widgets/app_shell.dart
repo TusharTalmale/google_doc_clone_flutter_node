@@ -35,7 +35,16 @@ class _AppShellState extends ConsumerState<AppShell> {
             width: isDesktop 
                 ? (_isSidebarExpanded ? 280 : 72)
                 : 0,
-            child: isDesktop ? _buildSidebar(user) : null,
+            child: isDesktop
+                ? ClipRect(
+                    child: OverflowBox(
+                      minWidth: _isSidebarExpanded ? 280 : 72,
+                      maxWidth: _isSidebarExpanded ? 280 : 72,
+                      alignment: Alignment.topLeft,
+                      child: _buildSidebar(user),
+                    ),
+                  )
+                : null,
           ),
           
           // Main Content

@@ -33,7 +33,7 @@ final class SocketClientProvider
   SocketClient create() => SocketClient();
 }
 
-String _$socketClientHash() => r'48a24f4243bc1f0984f622491de0658c6425f73a';
+String _$socketClientHash() => r'3f4855107311475c81d89163367d731d3afe4fea';
 
 abstract class _$SocketClient extends $StreamNotifier<SocketConnectionState> {
   Stream<SocketConnectionState> build();

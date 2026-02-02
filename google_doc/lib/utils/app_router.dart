@@ -2,6 +2,7 @@ import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_doc/models/user_model.dart';
 import 'package:google_doc/provider/auth_controller.dart';
 import 'package:google_doc/screens/screens.dart';
 import 'package:google_doc/utils/route_constants.dart';
@@ -11,21 +12,35 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authController = ref.watch(authControllerProvider);
+  final authState = ValueNotifier<AsyncValue<UserModel?>>(const AsyncLoading());
+  ref.onDispose(authState.dispose);
+
+  ref.listen(
+    authControllerProvider,
+    (_, next) => authState.value = next,
+    fireImmediately: true,
+  );
+
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
     debugLogDiagnostics: true,
+    refreshListenable: authState,
     redirect: (context, state) {
+      final authController = authState.value;
+      // Prevent redirecting to login while auth state is loading
+      if (authController.isLoading) {
+        return null;
+      }
       final isLoggedIn = authController.value != null;
       final isAuthRoute =
-          state.matchedLocation.startsWith('/login') ||
-          state.matchedLocation.startsWith('/register');
+          state.matchedLocation.startsWith(AppRoutes.login) ||
+          state.matchedLocation.startsWith(AppRoutes.register);
       if (!isLoggedIn && !isAuthRoute) {
-        return '/login';
+        return AppRoutes.login;
       }
       if (isLoggedIn && isAuthRoute) {
-        return '/home';
+        return AppRoutes.root;
       }
       if (state.matchedLocation.startsWith('/public')) {
         return null;
@@ -34,32 +49,26 @@ final routerProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(
-        path: '/auth',
-        redirect: (context, state) => '/auth/login',
-        routes: [
-          GoRoute(
-            path: 'login',
-            pageBuilder: (context, state) => CustomTransitionPage(
-              key: state.pageKey,
-              child: const Center(child: Text('login')),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-                    return FadeTransition(opacity: animation, child: child);
-                  },
-            ),
-          ),
-          GoRoute(
-            path: 'register',
-            pageBuilder: (context, state) => CustomTransitionPage(
-              key: state.pageKey,
-              child: const Center(child: Text('register')),
-              transitionsBuilder:
-                  (context, animation, secondaryAnimation, child) {
-                    return FadeTransition(opacity: animation, child: child);
-                  },
-            ),
-          ),
-        ],
+        path: AppRoutes.login,
+        name: AppRoutes.login,
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: LoginScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.register,
+        name: AppRoutes.register,
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: RegisterScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
       ),
 
       // Main App Shell (with sidebar)
@@ -73,12 +82,14 @@ final routerProvider = Provider<GoRouter>((ref) {
 
         routes: [
           GoRoute(
-            path: '/',
+            path: AppRoutes.root,
+            name: AppRoutes.root,
             pageBuilder: (context, state) =>
                 NoTransitionPage(child: HomeScreen()),
           ),
           GoRoute(
-            path: '/trash',
+            path: AppRoutes.trash,
+            name: AppRoutes.trash,
             pageBuilder: (context, state) => CustomTransitionPage(
               key: state.pageKey,
               child: TrashScreen(),
