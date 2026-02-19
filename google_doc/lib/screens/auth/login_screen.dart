@@ -7,41 +7,34 @@ import 'package:google_doc/utils/route_constants.dart';
 import '../../widgets/auth_widgets.dart';
 import 'package:google_doc/provider/auth_controller.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
+class _LoginFormControllers {
+  final email = TextEditingController();
+  final password = TextEditingController();
+
+  void dispose() {
+    email.dispose();
+    password.dispose();
+  }
+}
+
+final _loginFormProvider = Provider.autoDispose<_LoginFormControllers>((ref) {
+  final controllers = _LoginFormControllers();
+  ref.onDispose(controllers.dispose);
+  return controllers;
+});
+
+class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _isLoading = false;
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  void _login() {
-    setState(() => _isLoading = true);
-    ref
-        .read(authControllerProvider.notifier)
-        .login(_emailController.text.trim(), _passwordController.text.trim());
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
+    final controllers = ref.watch(_loginFormProvider);
+    final isLoading = auth.isLoading;
 
     ref.listen(authControllerProvider, (_, next) {
       next.whenOrNull(
-        data: (_) => setState(() => _isLoading = false),
         error: (e, _) {
-          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(e.toString()),
@@ -59,16 +52,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return Scaffold(
       body: auth.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(),
-        ),
-        error: (_, _) => _buildForm(context),
-        data: (_) => _buildForm(context),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (_, _) => _buildForm(context, ref, controllers, isLoading),
+        data: (_) => _buildForm(context, ref, controllers, isLoading),
       ),
     );
   }
 
-  Widget _buildForm(BuildContext context) {
+  Widget _buildForm(
+    BuildContext context,
+    WidgetRef ref,
+    _LoginFormControllers controllers,
+    bool isLoading,
+  ) {
     return AuthCard(
       children: [
         const AuthHeader(
@@ -77,7 +73,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
         const SizedBox(height: AppSizes.spaceLg),
         AuthTextField(
-          controller: _emailController,
+          controller: controllers.email,
           label: "Email",
           hint: "Enter your email",
           keyboardType: TextInputType.emailAddress,
@@ -85,7 +81,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ),
         const SizedBox(height: AppSizes.spaceMd),
         AuthTextField(
-          controller: _passwordController,
+          controller: controllers.password,
           label: "Password",
           hint: "Enter your password",
           obscure: true,
@@ -110,8 +106,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         const SizedBox(height: AppSizes.spaceMd),
         AuthPrimaryButton(
           text: "Sign In",
-          onPressed: _login,
-          isLoading: _isLoading,
+          onPressed: () {
+            ref
+                .read(authControllerProvider.notifier)
+                .login(
+                  controllers.email.text.trim(),
+                  controllers.password.text.trim(),
+                );
+          },
+          isLoading: isLoading,
         ),
         const SizedBox(height: AppSizes.spaceLg),
         const AuthDivider(),

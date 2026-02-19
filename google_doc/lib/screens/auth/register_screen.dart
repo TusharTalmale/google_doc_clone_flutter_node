@@ -7,45 +7,38 @@ import 'package:google_doc/utils/route_constants.dart';
 import '../../provider/auth_controller.dart';
 import '../../widgets/auth_widgets.dart';
 
-class RegisterScreen extends ConsumerStatefulWidget {
+class _RegisterFormControllers {
+  final name = TextEditingController();
+  final email = TextEditingController();
+  final password = TextEditingController();
+
+  void dispose() {
+    name.dispose();
+    email.dispose();
+    password.dispose();
+  }
+}
+
+final _registerFormProvider = Provider.autoDispose<_RegisterFormControllers>((
+  ref,
+) {
+  final controllers = _RegisterFormControllers();
+  ref.onDispose(controllers.dispose);
+  return controllers;
+});
+
+class RegisterScreen extends ConsumerWidget {
   const RegisterScreen({super.key});
 
   @override
-  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
-}
-
-class _RegisterScreenState extends ConsumerState<RegisterScreen> {
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _isLoading = false;
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  void _register() {
-    setState(() => _isLoading = true);
-    ref.read(authControllerProvider.notifier).register(
-          _nameController.text.trim(),
-          _emailController.text.trim(),
-          _passwordController.text.trim(),
-        );
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authControllerProvider);
+    final controllers = ref.watch(_registerFormProvider);
+    final isLoading = auth.isLoading;
 
     ref.listen(authControllerProvider, (_, next) {
       next.whenOrNull(
-        data: (_) => setState(() => _isLoading = false),
         error: (e, _) {
-          setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(e.toString()),
@@ -64,13 +57,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     return Scaffold(
       body: auth.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => _form(context),
-        data: (_) => _form(context),
+        error: (_, __) => _form(context, ref, controllers, isLoading),
+        data: (_) => _form(context, ref, controllers, isLoading),
       ),
     );
   }
 
-  Widget _form(BuildContext context) {
+  Widget _form(
+    BuildContext context,
+    WidgetRef ref,
+    _RegisterFormControllers controllers,
+    bool isLoading,
+  ) {
     return AuthCard(
       children: [
         const AuthHeader(
@@ -79,14 +77,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         ),
         const SizedBox(height: AppSizes.spaceLg),
         AuthTextField(
-          controller: _nameController,
+          controller: controllers.name,
           label: "Full Name",
           hint: "Enter your name",
           prefixIcon: Icons.person_outlined,
         ),
         const SizedBox(height: AppSizes.spaceMd),
         AuthTextField(
-          controller: _emailController,
+          controller: controllers.email,
           label: "Email",
           hint: "Enter your email",
           keyboardType: TextInputType.emailAddress,
@@ -94,7 +92,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         ),
         const SizedBox(height: AppSizes.spaceMd),
         AuthTextField(
-          controller: _passwordController,
+          controller: controllers.password,
           label: "Password",
           hint: "Create a password",
           obscure: true,
@@ -121,8 +119,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         const SizedBox(height: AppSizes.spaceLg),
         AuthPrimaryButton(
           text: "Create Account",
-          onPressed: _register,
-          isLoading: _isLoading,
+          onPressed: () {
+            ref
+                .read(authControllerProvider.notifier)
+                .register(
+                  controllers.name.text.trim(),
+                  controllers.email.text.trim(),
+                  controllers.password.text.trim(),
+                );
+          },
+          isLoading: isLoading,
         ),
         const SizedBox(height: AppSizes.spaceLg),
         const AuthDivider(),

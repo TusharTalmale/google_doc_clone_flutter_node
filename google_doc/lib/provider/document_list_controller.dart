@@ -32,7 +32,7 @@ class DocumentListController extends _$DocumentListController {
 
   Future<List<DocumentModel>> _fetchDocuments() async {
     final repository = ref.read(documentRepositoryProvider);
-    return await repository.getMyDocuments();  // FIXED: Was getDocuments()
+    return await repository.getMyDocuments();  
   }
 
   Future<void> refresh() async {
@@ -44,7 +44,7 @@ class DocumentListController extends _$DocumentListController {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final repository = ref.read(documentRepositoryProvider);
-      await repository.createDocument();  // FIXED: Removed title parameter (backend generates "Untitled")
+      await repository.createDocument(); 
       return _fetchDocuments();
     });
   }

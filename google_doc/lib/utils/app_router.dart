@@ -97,21 +97,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               transitionsBuilder: _buildFadeTransition,
             ),
           ),
-          // GoRoute(
-          //   path:'/settings',
-          //   pageBuilder: (context, state) =>
-          //       NoTransitionPage(child: SettingsScreen()),
-          // ),
-          // GoRoute(
-          //   path:'/about',
-          //   pageBuilder: (context, state) =>
-          //       NoTransitionPage(child: AboutScreen()),
-          // ),
-          // GoRoute(
-          //   path:'/privacy',
-          //   pageBuilder: (context, state) =>
-          //       NoTransitionPage(child: PrivacyScreen()),
-          // ),
+
           GoRoute(
             path: '/shared',
             pageBuilder: (context, state) => CustomTransitionPage(

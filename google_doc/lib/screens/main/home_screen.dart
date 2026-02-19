@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_doc/models/document_model.dart';
+import 'package:google_doc/provider/document_controller.dart';
 import 'package:google_doc/provider/document_list_controller.dart';
 import 'package:google_doc/utils/app_colors.dart';
 import 'package:google_doc/utils/app_theme.dart';
@@ -40,43 +41,45 @@ Widget _buildDocumentsGrid(
   final isTablet = screenWidth > AppSizes.tabletBreakpoint;
   final crossAxisCount = isDesktop ? 4 : (isTablet ? 3 : 2);
   final theme = Theme.of(context);
-  
+
   if (documents.isEmpty) {
     return _buildEmptyState(context, ref);
   }
 
   return CustomScrollView(
     slivers: [
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.spaceLg),
-          child: Row(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "My Documents",
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.5,
+      isDesktop
+          ? SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSizes.spaceLg),
+                child: Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "My Documents",
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: AppSizes.spaceXxs),
+                        Text(
+                          '${documents.length} document${documents.length != 1 ? 's' : ''}',
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: AppSizes.spaceXxs),
-                  Text(
-                    '${documents.length} document${documents.length != 1 ? 's' : ''}',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+                    const Spacer(),
+                    _buildViewToggle(context),
+                  ],
+                ),
               ),
-              const Spacer(),
-              _buildViewToggle(context),
-            ],
-          ),
-        ),
-      ),
+            )
+          : SizedBox(),
       SliverPadding(
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.spaceLg),
         sliver: SliverGrid(
@@ -102,11 +105,11 @@ Widget _buildDocumentsGrid(
 
 Widget _buildViewToggle(BuildContext context) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  
+
   return Container(
     decoration: BoxDecoration(
-      color: isDark 
-          ? AppColors.darkSurfaceVariant.withOpacity(0.5) 
+      color: isDark
+          ? AppColors.darkSurfaceVariant.withOpacity(0.5)
           : AppColors.lightSurfaceVariant.withOpacity(0.8),
       borderRadius: BorderRadius.circular(AppSizes.radiusSm),
     ),
@@ -163,7 +166,7 @@ class _ViewToggleButton extends StatelessWidget {
 Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
   final theme = Theme.of(context);
   final isDark = theme.brightness == Brightness.dark;
-  
+
   return Center(
     child: Padding(
       padding: const EdgeInsets.all(AppSizes.spaceLg),
@@ -187,7 +190,9 @@ Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
             child: Icon(
               Icons.description_outlined,
               size: 56,
-              color: isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary,
+              color: isDark
+                  ? AppColors.darkTextTertiary
+                  : AppColors.lightTextTertiary,
             ),
           ),
           const SizedBox(height: AppSizes.spaceLg),
@@ -246,8 +251,10 @@ Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
 
 Widget _buildShimmerLoading(BuildContext context) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  final shimmerColors = AppColors.getShimmerColors(Theme.of(context).brightness);
-  
+  final shimmerColors = AppColors.getShimmerColors(
+    Theme.of(context).brightness,
+  );
+
   return Shimmer.fromColors(
     baseColor: shimmerColors.$1,
     highlightColor: shimmerColors.$2,
@@ -272,7 +279,7 @@ Widget _buildShimmerLoading(BuildContext context) {
 
 Widget _buildErrorWidget(BuildContext context, WidgetRef ref, Object error) {
   final theme = Theme.of(context);
-  
+
   return Center(
     child: Padding(
       padding: const EdgeInsets.all(AppSizes.spaceLg),
@@ -294,7 +301,7 @@ Widget _buildErrorWidget(BuildContext context, WidgetRef ref, Object error) {
           ),
           const SizedBox(height: AppSizes.spaceLg),
           Text(
-            'Failed to load documents',
+            'Failed to load documents , please try again. ',
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w600,
             ),
@@ -312,6 +319,19 @@ Widget _buildErrorWidget(BuildContext context, WidgetRef ref, Object error) {
             onPressed: () => ref.refresh(documentListControllerProvider),
             icon: const Icon(Icons.refresh_rounded),
             label: const Text('Retry'),
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(
+                color: theme.colorScheme.onSurfaceVariant,
+                width: 1.5,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+              ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.spaceLg,
+                vertical: AppSizes.spaceSm,
+              ),
+            ),
           ),
         ],
       ),
@@ -320,28 +340,29 @@ Widget _buildErrorWidget(BuildContext context, WidgetRef ref, Object error) {
 }
 
 /// Glass Document Card
-class GlassDocumentCard extends StatefulWidget {
+
+class GlassDocumentCard extends ConsumerStatefulWidget {
   final DocumentModel document;
   final VoidCallback onTap;
 
   const GlassDocumentCard({
-    super.key, 
-    required this.document, 
+    super.key,
+    required this.document,
     required this.onTap,
   });
 
   @override
-  State<GlassDocumentCard> createState() => _GlassDocumentCardState();
+  ConsumerState<GlassDocumentCard> createState() => _GlassDocumentCardState();
 }
 
-class _GlassDocumentCardState extends State<GlassDocumentCard> {
+class _GlassDocumentCardState extends ConsumerState<GlassDocumentCard> {
   bool _isHovered = false;
 
   String _formatDate(DateTime? date) {
     if (date == null) return 'Recently';
     final now = DateTime.now();
     final difference = now.difference(date);
-    
+
     if (difference.inDays == 0) {
       if (difference.inHours == 0) {
         return '${difference.inMinutes}m ago';
@@ -358,7 +379,7 @@ class _GlassDocumentCardState extends State<GlassDocumentCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    
+
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -373,23 +394,29 @@ class _GlassDocumentCardState extends State<GlassDocumentCard> {
             borderRadius: BorderRadius.circular(AppSizes.radiusLg),
             child: BackdropFilter(
               filter: ImageFilter.blur(
-                sigmaX: _isHovered ? 15 : 10, 
+                sigmaX: _isHovered ? 15 : 10,
                 sigmaY: _isHovered ? 15 : 10,
               ),
               child: AnimatedContainer(
                 duration: AppSizes.durationFast,
                 decoration: BoxDecoration(
-                  color: isDark 
-                      ? (_isHovered ? AppColors.darkSurfaceVariant : AppColors.glassDark)
-                      : (_isHovered ? AppColors.lightSurface : AppColors.glassLight),
+                  color: isDark
+                      ? (_isHovered
+                            ? AppColors.darkSurfaceVariant
+                            : AppColors.glassDark)
+                      : (_isHovered
+                            ? AppColors.lightSurface
+                            : AppColors.glassLight),
                   borderRadius: BorderRadius.circular(AppSizes.radiusLg),
                   border: Border.all(
-                    color: _isHovered 
+                    color: _isHovered
                         ? AppColors.primary.withOpacity(0.3)
-                        : (isDark ? AppColors.glassBorderDark : AppColors.glassBorderLight),
+                        : (isDark
+                              ? AppColors.glassBorderDark
+                              : AppColors.glassBorderLight),
                     width: 1.5,
                   ),
-                  boxShadow: _isHovered 
+                  boxShadow: _isHovered
                       ? [
                           BoxShadow(
                             color: AppColors.primary.withOpacity(0.15),
@@ -411,12 +438,16 @@ class _GlassDocumentCardState extends State<GlassDocumentCard> {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              isDark 
-                                  ? AppColors.darkSurfaceVariant.withOpacity(0.5)
+                              isDark
+                                  ? AppColors.darkSurfaceVariant.withOpacity(
+                                      0.5,
+                                    )
                                   : AppColors.lightSurfaceVariant,
-                              isDark 
+                              isDark
                                   ? AppColors.darkSurface.withOpacity(0.5)
-                                  : AppColors.lightSurfaceVariant.withOpacity(0.5),
+                                  : AppColors.lightSurfaceVariant.withOpacity(
+                                      0.5,
+                                    ),
                             ],
                           ),
                           borderRadius: const BorderRadius.only(
@@ -435,10 +466,14 @@ class _GlassDocumentCardState extends State<GlassDocumentCard> {
                                   height: 64,
                                   decoration: BoxDecoration(
                                     gradient: AppColors.primaryGradient,
-                                    borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                                    borderRadius: BorderRadius.circular(
+                                      AppSizes.radiusMd,
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.primary.withOpacity(0.3),
+                                        color: AppColors.primary.withOpacity(
+                                          0.3,
+                                        ),
                                         blurRadius: 16,
                                         offset: const Offset(0, 6),
                                       ),
@@ -453,23 +488,40 @@ class _GlassDocumentCardState extends State<GlassDocumentCard> {
                               ),
                             ),
                             // Favorite star
-                            if (widget.document.isFavorite)
-                              Positioned(
-                                top: AppSizes.spaceXs,
-                                right: AppSizes.spaceXs,
+                            Positioned(
+                              top: AppSizes.spaceXs,
+                              right: AppSizes.spaceXs,
+                              child: InkWell(
+                                onTap: () => ref.read(documentControllerProvider(
+                                        widget.document.id).notifier)
+                                    .toggleFavorite() ,
+                               
                                 child: Container(
-                                  padding: const EdgeInsets.all(AppSizes.spaceXxs),
+                                  padding: const EdgeInsets.all(
+                                    AppSizes.spaceXxs,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.warning.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                                    color: widget.document.isFavorite
+                                        ? AppColors.warning.withOpacity(0.2)
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(
+                                      AppSizes.radiusSm,
+                                    ),
                                   ),
-                                  child: const Icon(
-                                    Icons.star_rounded,
-                                    size: 16,
-                                    color: AppColors.warning,
-                                  ),
+                                  child: widget.document.isFavorite
+                                      ? const Icon(
+                                          Icons.star_rounded,
+                                          size: 16,
+                                          color: AppColors.warning,
+                                        )
+                                      : Icon(
+                                          Icons.start_outlined,
+                                          size: 16,
+                                          color: AppColors.error,
+                                        ),
                                 ),
                               ),
+                            ),
                           ],
                         ),
                       ),
@@ -479,7 +531,7 @@ class _GlassDocumentCardState extends State<GlassDocumentCard> {
                     Container(
                       padding: const EdgeInsets.all(AppSizes.spaceSm),
                       decoration: BoxDecoration(
-                        color: isDark 
+                        color: isDark
                             ? AppColors.darkSurface.withOpacity(0.5)
                             : Colors.white.withOpacity(0.8),
                         borderRadius: const BorderRadius.only(
@@ -527,9 +579,12 @@ class _GlassDocumentCardState extends State<GlassDocumentCard> {
                                     const SizedBox(width: 2),
                                     Text(
                                       '${widget.document.collaborators.length}',
-                                      style: theme.textTheme.bodySmall?.copyWith(
-                                        color: theme.colorScheme.onSurfaceVariant,
-                                      ),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
                                     ),
                                   ],
                                 ),

@@ -54,6 +54,18 @@ class SocketRepository {
       }
     });
 
+    _client.on(SocketEvents.selectionChange, (data) {
+      if (data is Map) {
+        final rangeData = data['range'] as Map<String, dynamic>;
+        _eventController.add(SocketEvent.selectionUpdate(
+          userId: data['userId'] as String,
+          name: data['name'] as String? ?? '',
+          color: data['color'] as String? ?? '#4285F4',
+          range: Selection.fromJson(rangeData),
+        ));
+      }
+    });
+
     _client.on(SocketEvents.saveStatus, (data) {
       if (data is Map) {
         _eventController.add(SocketEvent.saveStatus(

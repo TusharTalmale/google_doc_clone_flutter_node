@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:google_doc/utils/api_constant.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:google_doc/models/user_model.dart';
-import 'package:google_doc/models/api_response.dart';
 import 'package:google_doc/services/dio_client.dart';
 
 part 'auth_repository.g.dart';
